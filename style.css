@@ -1,0 +1,307 @@
+/*!
+Project: shorts-player-kit
+File:    ./style.css
+Role:    Visual-only (veils/band/typography/effects). Base background is JS-controlled.
+Depends: body.version-(A|B|T), --symbol-bg-color (JS supplies)
+Memos (quick bugs):
+  - Never use !important on #bgColor (JS paints base)
+  - Debug panel must sit at bottom: JS sets inline position:fixed; this CSS only pads safe-area
+  - Page-1 is “Play-only” (UI note; logic lives in player.core.js)
+Quick Verify:
+  - Switch body.version-* changes veil tone
+  - .symbol-bg reflects --symbol-bg-color across full-bleed band
+  - Debug panel sticks to bottom (safe-area respected), play button clickable under banner
+NS-Core: Propose / Justify / Min-Execute / Verify / Record
+*/
+
+/* ========== Variables ========== */
+:root{
+  /* Text & shadow (A=light / B=dark) */
+  --txt-A:#2c2c2c; --bg-A:#f9f9f7; --shadow-A:1px 1px 3px rgba(0,0,0,.25);
+  --txt-B:#eaeaec; --bg-B:#1c1c1e; --shadow-B:0 0 8px rgba(255,255,255,.25);
+
+  /* Band color from JS */
+  --symbol-bg-color: transparent;
+
+  /* Band tone tweak */
+  --band-brightness:.92;
+  --band-sat:1.06;
+
+  /* Hairlines (上下1px) */
+  --band-line-width:1px;
+  --band-line-alpha-A:.06;
+  --band-line-alpha-B:.12;
+
+  /* Section tag (#Trivia N) */
+  --section-tag-gap-bottom:.5rem;
+  --section-tag-min:.8rem; --section-tag-fluid:2.2vw; --section-tag-max:1.0rem;
+  --tag-radius:999px; --tag-bg-alpha:.14;
+  --tag-border-alpha-A:.10; --tag-border-alpha-B:.18; --tag-shadow-alpha:.12;
+
+  /* Band paddings */
+  --symbol-outer-gap-y:1rem; --symbol-inner-gap-y:.30rem;
+
+  /* Veils (A=薄明 / B,T=半暗) */
+  --veilA-top:.12; --veilA-bottom:.06;
+  --veilB-top:.32; --veilB-bottom:.18;
+}
+
+/* ========== Reset ========== */
+*{ box-sizing:border-box; margin:0; padding:0; }
+
+/* ========== Root ========== */
+html,body{
+  width:100%;
+  overflow:hidden;
+  font-family:'Noto Sans JP',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+  transition:color .8s, background-color 1.2s;
+  touch-action:manipulation;
+}
+/* 初期フォールバック（JS未初期化時の白フラ防止） */
+body{ background-color:var(--bg-A); }
+
+/* ========== Layout ========== */
+#wrapper{
+  position:relative; z-index:1;
+  width:100%; height:100dvh;
+  display:flex; flex-direction:column; justify-content:center; align-items:center;
+}
+
+/* Banner (non-intercept overlay) */
+#banner{
+  position:fixed; top:0; left:0; right:0; width:100%;
+  padding:calc(.5rem + env(safe-area-inset-top,0px)) .5rem .5rem;
+  background:rgba(0,0,0,.30); color:#fff; text-align:center;
+  font-size:.9rem; z-index:1000; backdrop-filter:blur(4px);
+  text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;
+  border-bottom:1px solid rgba(255,255,255,.25);
+  pointer-events:none; min-height:2.25rem;
+}
+
+/* ========== Background Layers ========== */
+#bgColor,#bgBreath{ position:fixed; inset:0; z-index:0; pointer-events:none; }
+#bgColor{ transition:background-color 1.2s ease; }
+
+/* Veils via body.version-* */
+#bgColor::after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+}
+body.version-A #bgColor::after{
+  background:linear-gradient(to bottom,
+    rgba(255,255,255,var(--veilA-top)),
+    rgba(255,255,255,var(--veilA-bottom)));
+}
+body.version-B #bgColor::after,
+body.version-T #bgColor::after{
+  background:linear-gradient(to bottom,
+    rgba(0,0,0,var(--veilB-top)),
+    rgba(0,0,0,var(--veilB-bottom)));
+}
+
+/* Breathing halo */
+#bgBreath{
+  background:radial-gradient(ellipse at center, rgba(255,225,170,.9) 0%, transparent 70%);
+  animation:breath 12s ease-in-out infinite;
+  opacity:0; transition:opacity 1.5s; animation-play-state:paused;
+}
+#bgBreath.active{ animation-play-state:running; opacity:.2; }
+@keyframes breath{ 50%{ transform:scale(1.05);} }
+
+@supports(width:100dvw){
+  #bgColor,#bgBreath{ width:100dvw; height:100dvh; }
+}
+@supports not (width:100dvw){
+  #bgColor,#bgBreath{ width:100vw; height:100vh; }
+}
+
+/* ========== Content (scene surface) ========== */
+#content{ width:100%; max-width:600px; text-align:center; }
+
+/* Theme shadows */
+.title,.title_key,.section-tag,.symbol,.narr{ transition:text-shadow .8s; }
+body.version-A .title,body.version-A .title_key,body.version-A .section-tag,
+body.version-A .symbol,body.version-A .narr{ text-shadow:var(--shadow-A); }
+body.version-B .title,body.version-B .title_key,body.version-B .section-tag,
+body.version-B .symbol,body.version-B .narr,
+body.version-T .title,body.version-T .title_key,body.version-T .section-tag,
+body.version-T .symbol,body.version-T .narr{ text-shadow:var(--shadow-B); }
+
+/* Scene block */
+.scene{ width:90%; margin:0 auto; animation:fadeIn 700ms ease-out; }
+@keyframes fadeIn{ from{opacity:0; transform:translateY(20px);} to{opacity:1; transform:translateY(0);} }
+
+/* Section Tag */
+.section-tag{
+  display:inline-flex; align-items:center; gap:.35em;
+  padding:.2rem .6rem; margin-bottom:var(--section-tag-gap-bottom);
+  font-weight:700; letter-spacing:.02em; line-height:1.1;
+  font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size:clamp(var(--section-tag-min), var(--section-tag-fluid), var(--section-tag-max));
+  border-radius:var(--tag-radius);
+  background: color-mix(in srgb, var(--symbol-bg-color) calc(var(--tag-bg-alpha)*100%), transparent);
+  box-shadow:0 1px 2px rgba(0,0,0,var(--tag-shadow-alpha));
+}
+@supports not (color: color-mix(in srgb, red, blue)){
+  .section-tag{ background:rgba(0,0,0,.06); }
+}
+body.version-A .section-tag{
+  color:var(--txt-A); border:1px solid rgba(0,0,0,var(--tag-border-alpha-A));
+}
+body.version-B .section-tag, body.version-T .section-tag{
+  color:var(--txt-B); border:1px solid rgba(255,255,255,var(--tag-border-alpha-B));
+}
+
+/* Titles & Narration */
+.title_key{
+  font-family:'Shippori Mincho', serif; font-weight:700; letter-spacing:.08em;
+  margin-bottom:var(--title-key-gap-bottom, .5rem);
+  font-size:clamp(1.25rem, 3.8vw, 1.8rem);
+}
+.title{
+  font-family:'Shippori Mincho', serif; font-weight:700; letter-spacing:.08em;
+  margin-bottom:var(--title-gap-bottom, 1rem);
+  font-size:clamp(1.6rem, 5vw, 2.4rem);
+}
+.narr{
+  font-size:clamp(1rem, 2.2vw, 1.15rem);
+  line-height:1.8; white-space:pre-line; margin-bottom:1rem;
+}
+
+/* ========== Symbol Band (full-bleed) ========== */
+.symbol-bg{
+  position:relative; z-index:0; width:100%;
+  margin-block:var(--symbol-outer-gap-y);
+  padding:calc(1.5rem + var(--symbol-inner-gap-y)) 0;
+  display:flex; justify-content:center; align-items:center; text-align:center;
+}
+.symbol-bg::before{
+  content:""; position:absolute; inset:0; left:50%; transform:translateX(-50%);
+  width:100vw; background-color:var(--symbol-bg-color);
+  filter:brightness(var(--band-brightness)) saturate(var(--band-sat));
+  transition:background-color 1.2s ease, filter 1.2s ease;
+  z-index:-1; pointer-events:none;
+}
+@supports(width:100dvw){ .symbol-bg::before{ width:100dvw; } }
+.symbol-bg::after{
+  content:""; position:absolute; inset:0; left:50%; transform:translateX(-50%);
+  width:100vw; pointer-events:none; z-index:-1;
+  background-repeat:no-repeat; background-position:top left, bottom left;
+  background-size:100% var(--band-line-width), 100% var(--band-line-width);
+}
+@supports(width:100dvw){ .symbol-bg::after{ width:100dvw; } }
+body.version-A .symbol-bg::after{
+  background-image:
+    linear-gradient(to bottom, rgba(0,0,0,var(--band-line-alpha-A)), rgba(0,0,0,var(--band-line-alpha-A))),
+    linear-gradient(to top,    rgba(0,0,0,var(--band-line-alpha-A)), rgba(0,0,0,var(--band-line-alpha-A)));
+}
+body.version-B .symbol-bg::after,
+body.version-T .symbol-bg::after{
+  background-image:
+    linear-gradient(to bottom, rgba(255,255,255,var(--band-line-alpha-B)), rgba(255,255,255,var(--band-line-alpha-B))),
+    linear-gradient(to top,    rgba(255,255,255,var(--band-line-alpha-B)), rgba(255,255,255,var(--band-line-alpha-B)));
+}
+
+/* Emoji */
+.symbol{
+  font-size:clamp(4rem, 20vw, 8rem);
+  line-height:1.05; white-space:nowrap; display:inline-block; padding-bottom:.08em;
+}
+
+/* ========== Play Button ========== */
+.playBtn{
+  position:absolute; top:50%; left:50%;
+  --btn-scale:1; transform:translate(-50%,-50%) scale(var(--btn-scale));
+  width:100px; height:100px; border-radius:50%;
+  background:rgba(0,0,0,.12); color:#777; font-size:3rem; cursor:pointer;
+  backdrop-filter:blur(4px); transition:opacity .3s, transform .3s;
+  z-index:2; border:2px solid rgba(255,255,255,.4);
+  text-shadow:0 0 15px rgba(0,0,0,.7);
+}
+.playBtn:hover{ --btn-scale:1.1; background:rgba(255,255,255,.25); }
+.playBtn.hidden{ opacity:0; pointer-events:none; transform:translate(-50%,-50%) scale(.5); }
+
+/* ========== Effects (overlay) ========== */
+.effect-container{ position:fixed; inset:0; z-index:3; pointer-events:none; }
+
+/* Light-in */
+@keyframes sk-light-in {
+  0%{ opacity:1; background:radial-gradient(circle at center, white 0%, black 100%); }
+  100%{ opacity:0; background:radial-gradient(circle at center, white 200%, black 300%); }
+}
+.light-in{ animation: sk-light-in 1.5s ease-out forwards; }
+
+/* Burn-out / Flame-out (aliases) */
+@keyframes sk-flame-out { 0%{opacity:0;} 50%{opacity:1;} 100%{opacity:0;} }
+.flame-out, .burn-out{
+  background:radial-gradient(circle at bottom, #ff4800 0%, #ff7400 30%, #ffb300 60%, transparent 100%);
+  animation:sk-flame-out 1.5s ease-in forwards;
+}
+
+/* Flash */
+@keyframes flash{ 0%{opacity:.9;} 100%{opacity:0;} }
+.flash{ background:#fff; animation:flash .4s ease-out; }
+
+/* ========== Debug Panel (safe-area pin; 見た目のみ。位置はJS) ========== */
+#debug-panel{
+  padding-left:max(10px, env(safe-area-inset-left,0px));
+  padding-right:max(10px, env(safe-area-inset-right,0px));
+  padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));
+  will-change:transform;
+}
+#debug-panel .dbg-bar{
+  display:flex; align-items:center; gap:8px;
+  padding:6px 8px; background:rgba(0,0,0,.78);
+  border-top:1px solid rgba(255,255,255,.15); backdrop-filter:blur(4px);
+}
+#debug-panel .dbg-toggle{
+  appearance:none; border:1px solid rgba(255,255,255,.35);
+  background:rgba(255,255,255,.08); color:#fff;
+  padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px; line-height:1;
+}
+#debug-panel .dbg-toggle:hover{ background:rgba(255,255,255,.15); }
+#debug-panel .dbg-status{ font-size:12px; opacity:.9; margin-left:8px; }
+
+#debug-panel .dbg-body{
+  max-height:44vh; overflow:auto;
+  padding:8px; background:rgba(0,0,0,.68);
+  border-top:1px solid rgba(255,255,255,.15);
+}
+
+#debug-panel .dbg-row{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0; }
+#debug-panel .dbg-note{
+  width:100%; padding:6px 8px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:6px; font-size:12px; line-height:1.5; white-space:pre-wrap; margin:6px 0;
+}
+#debug-panel .dbg-buttons>button{
+  appearance:none; border:1px solid rgba(255,255,255,.35);
+  background:rgba(255,255,255,.08); color:#fff;
+  padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px; line-height:1;
+}
+#debug-panel .dbg-buttons>button:hover{ background:rgba(255,255,255,.15); }
+#debug-panel .dbg-buttons>button.accent-cyan{
+  border-color:rgba(0,200,255,.55); background:rgba(0,200,255,.15);
+}
+#debug-panel .dbg-buttons>button.accent-red{
+  border-color:rgba(255,120,120,.55); background:rgba(255,120,120,.15);
+}
+#debug-panel .goto{ display:inline-flex; align-items:center; gap:4px; margin-left:4px; }
+#debug-panel .goto input{
+  width:64px; padding:4px 6px; border-radius:4px; border:1px solid rgba(255,255,255,.25);
+  background:rgba(0,0,0,.2); color:#fff; font-size:12px;
+}
+#debug-panel .dbg-tts{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+#debug-panel .dbg-tts .grp-label{ opacity:.85; font-size:12px; margin-right:4px; }
+
+/* 折り畳み時：バー以外クリック透過（Playボタン保護） */
+#debug-panel.collapsed{ pointer-events:none; }
+#debug-panel.collapsed .dbg-bar{ pointer-events:auto; }
+
+/* ========== Optional FX Canvas ========== */
+#bgFX{ position:fixed; inset:0; z-index:0; pointer-events:none; mix-blend-mode:screen; opacity:.9; }
+@media (prefers-reduced-motion:reduce){ #bgFX{ display:none; } }
+body.version-B #bgFX, body.version-T #bgFX{ mix-blend-mode:lighten; opacity:.7; }
+
+/* ========== Mobile-friendly input sizing ========== */
+input,select,textarea,button{ font-size:16px; min-height:44px; }

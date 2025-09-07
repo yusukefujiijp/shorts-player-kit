@@ -1,0 +1,139 @@
+<!--
+Project: shorts-player-kit
+File:    index.html
+Role:    Runtime entry (enforces load-order contract)
+Depends: ./style.css → ./js/tts-voice-utils.js → ./js/scene-effects.js → ./js/player.core.js → ./js/debug_config.js → ./js/debug_panel.js
+Rules:
+  - Load order MUST be: style.css → tts-voice-utils.js → scene-effects.js → player.core.js → debug_config.js → debug_panel.js
+  - No ES modules (no import/export)
+  - Base background is JS-controlled; CSS adds veils/bands/typography only
+Quick Verify:
+  - First paint shows light fallback
+  - Page-1: ▶︎ ボタンは JS により動的生成（HTMLに静的ボタンは置かない）
+  - Debug bar docked bottom (collapsible OK)
+NS-Core: Propose / Justify / Min-Execute / Verify / Record
+-->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <!-- iOS Safe-Area 有効化（ズーム抑止を含む） -->
+  <meta id="vp" name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+  <meta name="generator" content="NS-Core (Propose/Justify/Min-Execute/Verify/Record)" />
+  <meta name="description" content="A/B思想と聖なるリズムに基づくショート動画プレイヤー。" />
+  <title>The Ideal Model Player</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Shippori+Mincho:wght@700&display=swap" rel="stylesheet" />
+
+  <!-- MUST #1: CSS first -->
+  <link rel="stylesheet" href="./style.css" />
+
+  <!-- === [SK-BLOCK:SAFE-AREA-AI-NE-001 begin] ICB-lift + UI-guard (background-safe) === -->
+  <style>
+    /* env() を集約＋実測補正の受け皿 */
+    :root{
+      --sa-top: env(safe-area-inset-top, 0px);
+      --sa-right: env(safe-area-inset-right, 0px);
+      --sa-bottom: env(safe-area-inset-bottom, 0px);
+      --sa-left: env(safe-area-inset-left, 0px);
+      --host-bias-bottom: 0px; /* visualViewport 実測補正を流し込む */
+    }
+
+    /* 背景直塗り面は余白ゼロ維持（連続性担保）＋ダブルタップ抑止 */
+    html, body { margin:0; padding:0; }
+    html, body, #wrapper { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+
+    /* ICBリフト：fixed の基準面を持ち上げる（下端のみ） */
+    body{
+      padding-bottom: calc(var(--sa-bottom) + var(--host-bias-bottom));
+      padding-bottom: max(var(--sa-bottom), var(--host-bias-bottom)); /* fallback 併記 */
+    }
+
+    /* UIガード：下部固定UIの可視・可触性を確保
+       NOTE: #debug-panel に position は与えない（JS が fixed/bottom:0 を付与） */
+    #debug-panel{
+      padding-bottom: var(--sa-bottom);
+    }
+    #debug-panel::before{
+      content:"";
+      position:absolute;
+      left:0; right:0;
+      bottom:calc(-1 * var(--sa-bottom));
+      height:var(--sa-bottom);
+      background:inherit;
+      border-bottom-left-radius:inherit;
+      border-bottom-right-radius:inherit;
+      pointer-events:none;
+    }
+  </style>
+  <!-- === [SK-BLOCK:SAFE-AREA-AI-NE-001 end] === -->
+</head>
+
+<body>
+  <div id="banner" role="banner" aria-live="polite"></div>
+
+  <!-- 背景レイヤは 1 個のみ。JS 側でも ensure するが、初期チラツキ抑制のため明示設置 -->
+  <div id="bgColor"></div>
+  <div id="bgBreath"></div>
+
+  <div id="wrapper">
+    <!-- JS がここに .scene を生成する（契約: #content の中だけに本文DOM） -->
+    <div id="content" role="main" aria-live="polite"></div>
+  </div>
+
+  <!-- デバッグパネルのホスト（無くてもJSが自動生成する） -->
+  <div id="debug-panel"></div>
+
+  <!-- === [SK-BLOCK:SAFE-AREA-AI-NE-002 begin] host bias feeder (visualViewport probe) === -->
+  <script>
+    (function(){
+      try{
+        var de = document.documentElement;
+        var vv = window.visualViewport;
+        function upd(){
+          var g = 0;
+          if (vv) g = Math.max(0, Math.ceil(window.innerHeight - (vv.offsetTop + vv.height)));
+          de.style.setProperty('--host-bias-bottom', g + 'px');
+        }
+        if (vv){
+          vv.addEventListener('resize', upd);
+          vv.addEventListener('scroll', upd);
+        }
+        window.addEventListener('orientationchange', function(){ setTimeout(upd, 0); }, { passive:true });
+        var i = 0; (function warm(){ i++; upd(); if (i < 6) requestAnimationFrame(warm); })();
+      } catch(e){}
+    })();
+  </script>
+  <!-- === [SK-BLOCK:SAFE-AREA-AI-NE-002 end] === -->
+
+  <!-- Load order (all JS under ./js/) -->
+  <!-- 1) TTS voice catalog & chooser -->
+  <script src="./js/tts-voice-utils.js" defer></script>
+  <!-- 2) Visual effects engine (Promise-based) -->
+  <script src="./js/scene-effects.js" defer></script>
+  <!-- 3) Player core (fetch scenes.json, render, playback, TTS) -->
+  <script src="./js/player.core.js" defer></script>
+  <!-- 4) Debug config (code-side gating; read-only) -->
+  <script src="./js/debug_config.js" defer></script>
+  <!-- 5) Debug UI (collapsible panel; respects config) -->
+  <script src="./js/debug_panel.js" defer></script>
+
+  <noscript>
+    <style>
+      #wrapper{ display:flex; align-items:center; justify-content:center; height:100dvh; }
+      #content{ max-width:640px; padding:1rem; font-family:system-ui, sans-serif; }
+    </style>
+    <div id="content">
+      <h1>JavaScript がオフになっています</h1>
+      <p>このプレイヤーは JavaScript により背景・演出・読み上げを制御します。<br>
+         有効化してページを再読み込みしてください。</p>
+    </div>
+  </noscript>
+
+  <!-- Host zoom/gesture guard (recording-friendly) -->
+  <script defer src="./js/global-zoom-guard.js"></script>
+</body>
+</html>
