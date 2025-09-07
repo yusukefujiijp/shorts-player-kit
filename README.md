@@ -1,4 +1,4 @@
-# shorts-player-kit (iOS-first) — Root README (2025-08-30)
+# shorts-player-kit (iOS-first) — Root README (2025-09-07)
 
 このリポは **短編プレイヤー**と**創造日シリーズ台本**を iOS（Textastic × Working Copy）で開発・検証するための最小構成です。  
 **次スレへ正確に引き継ぐための“唯一の参照点”**として、この README を常に最新に保ちます。
