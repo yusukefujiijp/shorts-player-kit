@@ -1,31 +1,64 @@
-# shorts-player-kit (iOS-first) — Root README (2025-09-09)
+# shorts-player-kit — *AI-New Era Playbook v2* (iOS-first)
 
-このリポは **短編プレイヤー**と**創造日シリーズ台本**を iOS（Textastic × Working Copy）で開発・検証する最小構成です。  
-**次スレへ正確に引き継ぐ唯一の参照点**として、この README を常に最新に保ちます。
+> **目的**: iOS（Textastic × Working Copy × a‑Shell）だけで “短編プレイヤー” を**小粒に日課化**して育てる。  
+> **運用原則**: 「**Move 37**（一歩先の工夫）を**毎日1フェーズ**」。**小さく編集 → すぐPush → すぐ検証**。
+
+- **公開URL**（GitHub Pages / プロジェクトサイト）  
+  `https://yusukefujiijp.github.io/shorts-player-kit/`
+- **Source**: `main`（単独運用のため基本1ブランチ運用）
+- **検証端末**: iOS / Safari
 
 ---
 
-## 0. Source of Truth（今の決定事項）
+## 🫀 Heartbeat（空コミット代替の“接触記録” / Append-only）
+<!-- APPEND-ONLY: heartbeat -->
+- **Last touched (JST)**: 2025-09-10 06:19:15 UTC+09:00
+- *使い方*: 差分が無い日も **上行の時刻だけを更新**して Commit → Push。Working Copy でも空コミット相当が実現できる。  
+- *補助スクリプト（a‑Shell任意）*:
+  ```bash
+  python3 - <<'PY'
+from datetime import datetime, timedelta, timezone
+JST = timezone(timedelta(hours=9))
+stamp = datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S JST")
+p = "README.md"
+tgt = "*Last touched (JST)*:"
+lines = open(p, encoding="utf-8").read().splitlines()
+for i, line in enumerate(lines):
+    if tgt in line:
+        lines[i] = f"- **Last touched (JST)**: {stamp}"
+        break
+open(p, "w", encoding="utf-8").write("\n".join(lines)+"\n")
+print("updated:", stamp)
+PY
+  ```
 
-- **公開URL（GitHub Pages / プロジェクトサイト）**  
-  - `https://yusukefujiijp.github.io/shorts-player-kit/`  
-  - Settings → Pages → **Build and deployment: GitHub Actions**（Source）
-- **OG / favicon / 404**  
-  - `assets/og-image.png`（**1200×630 PNG**、SNS互換◎）  
-  - `assets/favicon.svg`（**SPK v2**／小サイズ可読最適化）  
-  - `assets/favicon.ico`（任意・後日、旧UA互換用）  
-  - `404.html`（ルート直下）
-- **メタの原則**  
-  - `og:image` と `twitter:image` は **同一の絶対URL**（上の公開ドメイン）。  
-  - `canonical` / `og:url` も **正ドメイン（yusukefujiijp）** を厳守。
-- **TTS 速度規範**：役割別**絶対レートのみ**（`0.5–2.0`, step `0.1`, 既定 `1.4`）  
-  - UIは **Role Rate ×** のみ（基準レートUIは非表示）。  
-  - 待機計時も `rateFor('narr')` に統一（独自クランプなし）。
-- **ページ規約**：`Page 1 = Play専用`（Opening/Transition/Closing は純エフェクト）  
-- **スキーマ**：`schema v2.7` 系。`scenes.json` 一元読み込み（インラインJSON禁止）。  
-- **iOS実行**：`file://` を避け、`python3 -m http.server 8080` により `http://127.0.0.1:8080` で開く。
+---
 
-> **再発防止メモ**：ドメインは `yusukefujiijp`。`yusukefujijjp` は誤り。
+## 🧭 追記場所ガイド（迷わないための地図）
+
+> **ここを見れば、何をどこに書くか一目で判る。** 追記は**該当セクションの「Append-only」ブロックへ**。
+
+1. **決定事項の更新** → [0. いまの決定事項](#0-いまの決定事項source-of-truth) の **Append-only**。  
+2. **Git/コミット運用ルール** → [4. Git/GitHub 運用規範](#4-gitgithub-運用規範コミット規範--ai-commit-master)。  
+3. **Pages公開の作業記録** → [5. Pages デプロイ](#5-pages-デプロイgithub-actions) の **Deployment Journal**。  
+4. **OG画像/ファビコン等の資産更新** → [6. アセット運用](#6-アセット運用og画像favicon-他) の **Assets Journal**。  
+5. **日次の到達点・学び** → [10. 日次チェックポイント](#10-日次チェックポイントappend-only) の **Append-only**。  
+6. **不具合や対処メモ** → [7. トラブル対処集](#7-トラブル対処集faq--troubleshooting)。  
+7. **次の一手（ロードマップ）** → [9. フェーズ別ロードマップ](#9-フェーズ別ロードマップone-phase-per-day)。
+
+---
+
+## 0. いまの決定事項（Source of Truth）
+
+- **TTS 速度規範**: 役割別**絶対レート**のみ使用（`0.5–2.0`, step `0.1`, 既定 `1.4`）。UIは **Role Rate ×** のみ。  
+- **ページ規約**: `Page 1 = Play専用`。Opening/Transition/Closing は**純エフェクト**（title/narr/symbolなし）。  
+- **スキーマ**: `schema v2.7` 系。`scenes.json` 一元読み込み（インラインJSON禁止）。  
+- **iOS動作**: `file://` は避け、**a‑Shell の http.server** で `http://127.0.0.1:8080` から開く。  
+- **公開**: GitHub Pages（Source=**GitHub Actions**）。`static.yml` でルート全配信（`path: '.'`）。  
+- **ドメイン**: すべて **yusukefujiijp** に統一（誤綴り `yusukefuijijp` を禁止）。
+
+<!-- APPEND-ONLY: decisions -->
+- *(Append here / ここに決定事項を箇条書きで追記する)*
 
 ---
 
@@ -33,170 +66,176 @@
 
 ```
 shorts-player-kit/
-├─ .github/workflows/static.yml      # Pagesデプロイ（Actions）
-├─ assets/                           # 画像・音源（og-image.png, favicon.svg 等）
-├─ backup/                           # 旧資料退避（公開不要）
-├─ content/                          # 台本アーカイブ（DayX_YYYYMMDD.json）
-├─ dev/ / docs/ / releases/          # 補助
+├─ assets/           # 画像・音源など（og-image.png, favicon.svg/.ico など）
+├─ backup/           # 旧ファイルの退避先（zip等） ※公開除外
+├─ content/          # 台本のアーカイブ群（DayX_YYYYMMDD.json など）
+├─ dev/              # 開発メモ、テンプレ、検証用ファイル
+├─ docs/             # 仕様や手順メモ（外部共有向け）
 ├─ js/
-│  ├─ _archives/                     # 旧版の保管
-│  ├─ debug_config.js                # デバッグUIのゲーティング
-│  ├─ debug_panel.js                 # デバッグUI本体
-│  ├─ global-zoom-guard.js           # iOS向けズーム/セーフエリア軽ガード
-│  ├─ player.core.js                 # プレイヤ中枢（再生・待機・TTS結線）
-│  ├─ README.md                      # js仕様メモ
-│  ├─ scene-effects.js               # エフェクトレジストリ
-│  └─ tts-voice-utils.js             # 声カタログ & 役割別レート
-├─ index.html                        # エントリ（読込順は §3）
-├─ scenes.json / schema.json         # 台本とスキーマ
-└─ style.css                         # 最小スタイル
+│  ├─ _archives/                 # 旧版JSの保管
+│  ├─ debug_config.js            # デバッグUIのゲーティング設定（コードのみで切替）
+│  ├─ debug_panel.js             # 底部デバッグパネル本体（Role Rate× / Voice など）
+│  ├─ global-zoom-guard.js       # （任意）iOS向けズーム/セーフエリアの軽ガード
+│  ├─ player.core.js             # プレイヤ中枢（再生・待機・TTS結線）
+│  ├─ README.md                  # jsフォルダ専用 README（最新仕様）
+│  ├─ scene-effects.js           # エフェクトレジストリ（light-in / flame-out 等）
+│  └─ tts-voice-utils.js         # 声カタログ & 役割別レート・エンジン
+├─ releases/        # 配布物やタグ候補（空でもOK）
+├─ index.html       # エントリ（script 読み込み順は 3. を厳守）
+├─ scenes.json      # 現行の台本（例：第六日 / Day6）
+├─ schema.json      # スキーマ（v2.7 相当）
+└─ style.css        # 最小スタイル
 ```
 
-> `scenes.json` は現時点 **第六日（Day6）**。`content/` に日付付きでアーカイブします。
+> **メモ**: 最新時点で `scenes.json` は **第六日（Day6）**。`content/` に日付入りでアーカイブ。
 
 ---
 
 ## 2. 主要コンセプト
 
-2.1 **役割別レート一本化**  
-2.1.1 UI: `debug_panel.js` の **Role Rate ×**（Tag / TitleKey / Title / Narr）。  
-2.1.2 実行: `player.core.js` → `rateFor(role)` → `tts-voice-utils.getRateForRole(1.0, role)`。  
-2.1.3 レンジ: `0.5–2.0`、既定 `1.4`（LS未設定時）。  
-
-2.2 **Voice UI の統合**  
-2.2.1 `Voice: [✓] Tag <select>  [✓] TitleKey <select> …` を一列構成。  
-2.2.2 `Auto` は `__ttsUtils.pick(role)`（安定ID: `voiceURI > lang|name > name`）。
+- **役割別レート一本化**  
+  - 実行系: `rateFor(role)` → `tts-voice-utils.getRateForRole(1.0, role)`  
+  - 範囲: **0.5–2.0**, 既定 **1.4**, step **0.1**。  
+- **Voice UI の統合**  
+  - `Voice: [✓] Tag <select>  [✓] TitleKey <select> …` の一列配置。  
+  - `Auto` は `__ttsUtils.pick(role)` に委任（安定ID: `voiceURI > lang|name > name`）。
+- **Move 37 運用**  
+  - *Always Be Shipping*: 小粒（1–10ファイル）で**即Push/即検証**。  
+  - 破壊的変更は短命ブランチで隔離→速やかにmerge。
 
 ---
 
-## 3. `<script>` 読込順（**index.html と一致させる契約**）
+## 3. `<script>` の読み込み順（必ずこの順）
 
 ```html
-<!-- 1) TTSユーティリティ（プレイヤより先） -->
+<!-- 1) TTS voice catalog & chooser -->
 <script src="./js/tts-voice-utils.js" defer></script>
-<!-- 2) エフェクト（Promiseベース） -->
+<!-- 2) Visual effects engine (Promise-based) -->
 <script src="./js/scene-effects.js" defer></script>
-<!-- 3) プレイヤ中枢 -->
+<!-- 3) Player core (fetch scenes.json, render, playback, TTS) -->
 <script src="./js/player.core.js" defer></script>
-<!-- 4) デバッグ設定（UI本体より先） -->
+<!-- 4) Debug config (code-side gating; read-only) -->
 <script src="./js/debug_config.js" defer></script>
-<!-- 5) デバッグUI本体 -->
+<!-- 5) Debug UI (collapsible panel; respects config) -->
 <script src="./js/debug_panel.js" defer></script>
-<!-- 6) 任意のガード -->
+<!-- 6) Host zoom/gesture guard (recording-friendly) -->
 <script src="./js/global-zoom-guard.js" defer></script>
 ```
 
-> **破ると** 初期化順序で不具合が出ます（未定義参照／設定未適用）。
-
 ---
 
-## 4. iOS ローカル検証（Textastic × Working Copy × a-Shell）
+## 4. Git/GitHub 運用規範（コミット規範 & AI-Commit Master）
 
-4.1 編集：Textastic → Working Copy ▶︎ Repositories ▶︎ 本リポを直接編集。  
-4.2 サーバ：a-Shell で  
-```bash
-cd ~/Documents/shorts-player-kit
-python3 -m http.server 8080
-```  
-4.3 再生：Safari で `http://127.0.0.1:8080/index.html`（`file://` 禁止）。  
-4.4 ループ：Textastic保存 → Safariリロード（初回は任意クリックでTTS解錠）。
+- **Summary（英語1行）**: `<type>(<scope>)<!>: <imperative>`（句点なし／50字目安／72字上限）。  
+- **Detail（日本語）**: 先頭に **日本語版Summary（直訳）** を必ず置く。  
+- **主要type**: `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert|deps`。  
+- **ミニ辞書**: *feat=機能*, *fix=修正*, *docs=文書*, *style=体裁*, *refactor=作り替え*, *test=テスト*, *chore=雑務*…  
+- **テンプレ**:
 
----
-
-## 5. Working Copy（日常運用）
-
-5.1 基本ルート：**編集 → Stage → Commit → Push**。  
-5.2 併用時：他端末/ブラウザ変更があり得るなら **Fetch → Pull → Push** を習慣化。  
-5.3 ブランチ：個人運用は `main` 一本で可。壊す恐れのみ短命ブランチ。  
-
-**コミット規範：AI-Commit Master Prompt V3.0＋日本語版Summary必須**  
-- Summary＝英語（Conventional Commits）。  
-- Detail＝日本語4段：**【直訳】→【要約】→【理由】→【学び】**（最上段に“日本語版Summary”）。  
-- 種別辞書：feat / fix / docs / style / refactor / test / chore / perf / build / ci / deps / revert。  
-
----
-
-## 6. LocalStorage キー（実装で使用）
-
-6.1 役割別レート：`dbg.tts.role.tag|titleKey|title|narr`。  
-6.2 折り畳み：`dbg.panel.collapsed.v2`。  
-6.3 互換（基準レートUI時のみ）：`dbg.tts.rate`。
-
----
-
-## 7. GitHub Pages 公開（Actions運用）
-
-7.1 設定  
-7.1.1 Settings → Pages → **GitHub Actions** を選択。  
-7.1.2 `.github/workflows/static.yml`（公式「Static HTML」基調）：  
-- `on.push.branches: ["main"]`＋`workflow_dispatch`  
-- `steps`: `checkout → configure-pages → upload-pages-artifact(path: '.') → deploy-pages`  
-
-> **注**：現状は `path: '.'` で**全体公開**。公開除外を強めたいときは Allowlist 方式（`public/` 生成→`path: 'public'`）へ移行。
-
-7.2 検証  
-7.2.1 Actions の最新 Run が **Success**。  
-7.2.2 公開URLトップが描画される。  
-7.2.3 `…/assets/og-image.png` を**直叩き**できる。
-
----
-
-## 8. アセット仕様（OG / favicon / SEO）
-
-8.1 **OG画像**  
-8.1.1 `assets/og-image.png`（**1200×630 PNG**、文字は縮小でも可読）。  
-8.1.2 メタ：`og:image` と `twitter:image` を **同一絶対URL** にする。  
-8.1.3 検証：Meta Sharing Debugger / Twitter Card Validator / LinkedIn Post Inspector。  
-8.1.4 キャッシュ：表示が古い場合は **Scrape Again**。  
-
-8.2 **Favicon（SPK v2 / 確定値）**  
-8.2.1 ファイル：`assets/favicon.svg`。  
-8.2.2 背景：安全インセット `x=y=24`、`w=h=464`、`rx=104`、ネイビー→チャコールの線形グラデ。  
-8.2.3 文字：`SPK`、**Inter 800**、`font-size=188`、`letter-spacing=-0.024em`、`dy=.11em`。  
-8.2.4 ハロー：`stroke=#000`、`stroke-width=22`、`stroke-opacity=0.16`、`paint-order: stroke fill`。  
-8.2.5 検証スニペット（16/32/64px 同時確認）：
-```html
-<img src="./assets/favicon.svg" width="16" height="16">
-<img src="./assets/favicon.svg" width="32" height="32">
-<img src="./assets/favicon.svg" width="64" height="64">
 ```
-8.2.6 HTMLリンク（併用推奨）：
-```html
-<link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
-<link rel="icon" type="image/x-icon" href="./assets/favicon.ico"> <!-- 任意／旧UA -->
+Summary: <type>(<scope>)<!>: <imperative English summary>
+Detail:
+【直訳】<type和訳>(<scope>): <和訳Summary>
+【要約】<1行で>
+【理由】<課題/選定理由/代替案却下理由>
+【学び・Nuance】<英語typeの意図/検証結果/再発防止>
 ```
-8.2.7 キャッシュ更新：  
-`<link rel="icon" href="./assets/favicon.svg?v=20250909">` のように**クエリでバージョン付与**も可。  
+
+> **Working Copy** は空コミット不可。**Heartbeat の時刻を更新**すれば小差分でコミット可能（推奨）。
 
 ---
 
-## 9. トラブルシュート
+## 5. Pages デプロイ（GitHub Actions）
 
-9.1 **TTSが鳴らない**：初回クリック未実行／TTSフラグOFF／実質空行／iOSサイレント。  
-9.2 **Rate行が出る**：`debug_config.js` → `sections.baseRate=false` を確認。  
-9.3 **音と待機がズレる**：`player.core.js` が `rateFor('narr')` を使用しているか（独自クランプ排除）。  
-9.4 **404/OGが出ない**：ファイルの場所（ルート直下/`assets/`）と**絶対URL**を再確認。  
-9.5 **faviconが更新されない**：ブラウザのキャッシュ／クエリ版 `?v=...` を適用。  
+- **設定**: Settings → Pages → Source: **GitHub Actions**。  
+- **workflow**: `.github/workflows/static.yml`（`path: '.'` でルート配信）。  
+- **成功判定**: ActionsのRunが緑**Success** かつ **Deploy to GitHub Pages** が緑。  
+- **URL**: `https://yusukefujiijp.github.io/shorts-player-kit/`。
 
----
-
-## 10. 次スレ開始チェックリスト
-
-10.1 `scenes.json` のテーマ（例：Day6/Day7）が明記。  
-10.2 `debug_config.js` → `sections.baseRate=false`（役割別のみ）。  
-10.3 Role Rate ×：既定 `1.4`、範囲 `0.5–2.0`、step `0.1`。  
-10.4 `player.core.js` に `roleRate()` が無い（`rateFor()` に統一）。  
-10.5 iOSは `python3 -m http.server 8080` 経由で検証。  
-10.6 直近の台本は `content/` にアーカイブ済み。  
-10.7 OGとfaviconは本仕様（§8）どおりに存在し、直叩きOK。  
+### Deployment Journal（Append-only）
+<!-- APPEND-ONLY: deploy -->
+- 2025-09-10: Meta/Twitterカード検証済み（FB/Twitterとも正常）。
 
 ---
 
-## 11. 変更履歴（このREADMEの更新）
+## 6. アセット運用（OG画像／Favicon 他）
 
-- **2025-09-09**: Pages公開手順・OG/fav/404・検証手順を追記。JS読込順を契約化。**SPK favicon v2** の確定値を明記。AI-Commit Master Prompt V3.0／日本語版Summary必須を常設。  
-- **2025-09-08**: 初版起稿。
+- **OG画像**: `assets/og-image.png`（推奨: 1200×630, 16:9 もOK, 500KB以下）。  
+- **favicon**: `assets/favicon.svg`（SVG推奨、`.ico` も併用可）。  
+- **HTMLヘッダー**（`index.html`）の要点:  
+  - `<link rel="canonical" href="https://yusukefujiijp.github.io/shorts-player-kit/">`  
+  - `<meta property="og:url" content="…/shorts-player-kit/">`  
+  - `<meta property="og:image" content="…/assets/og-image.png">`  
+  - `<meta name="twitter:image" content="…/assets/og-image.png">`（**og:image と同一**）
+
+### Assets Journal（Append-only）
+<!-- APPEND-ONLY: assets -->
+- 2025-09-10: OG画像とTwitter画像のURLを統一／SVGファビコンをSPK版に最適化。
 
 ---
 
-Joy: 役割ごとに息を整え、物語は歩きます。🕯️
+## 7. トラブル対処集（FAQ & Troubleshooting）
+
+- **404（公開URL）**: `index.html` がリポ直下か、`static.yml` の `path: '.'` を確認。  
+- **ドメイン誤記**: `yusukefujiijp` への統一（誤: `yusukefuijijp`）。  
+- **カードが古い**: Facebook Debuggerの **Scrape Again** ／ Twitter Cardの再検証。  
+- **Actionsで失敗**: どのステップで赤×か確認（`Upload artifact` の path ミスなど）。  
+- **iOSでTTS無音**: 初回タップ未実行／サイレントモード／TTSフラグOFF。
+
+---
+
+## 8. iOS ローカル検証（Textastic × Working Copy × a‑Shell）
+
+1. **編集**: Textastic で Working Copy の `shorts-player-kit` を直接編集。  
+2. **サーバ**: a‑Shell で以下を実行。  
+   ```bash
+   cd ~/Documents/shorts-player-kit
+   python3 -m http.server 8080
+   ```
+3. **再生**: Safari で `http://127.0.0.1:8080/index.html` を開く（`file://` 禁止）。  
+4. **ループ**: Textasticで保存 → Safariでリロード。初回は任意クリックでTTS解錠。
+
+---
+
+## 9. フェーズ別ロードマップ（One Phase Per Day）
+
+- **Phase 0**: 公開URL/Meta/Actions 成功の確認（完了）。  
+- **Phase 1**: `.gitignore` 追補（`backup/**`, `*.zip`, `.DS_Store` 等）＋ 404 に「トップへ戻る」。  
+- **Phase 2**: `scenes.json` を Day7 へ差替え、Day6 を `content/` にアーカイブ。  
+- **Phase 3**: デバッグUIの既定値再確認（役割別のみ／基準レートUIは非表示）。  
+- **Phase 4**: Voice固定マップ導入（再現性向上）。  
+- **Phase 5**: 最小E2E検証スクリプト（再生/停止/シーン遷移）。
+
+<!-- APPEND-ONLY: roadmap -->
+- *(Append here / 以降のPhase計画を追記)*
+
+---
+
+## 10. 日次チェックポイント（Append-only）
+
+> **書式**: `YYYY-MM-DD: <一行の到達点> — <学び/課題/次アクション>`
+
+<!-- APPEND-ONLY: daily -->
+- 2025-09-10: Pages公開/OG/Twitterカード検証を記録 — 次は `.gitignore` と 404 を整備。
+
+---
+
+## 11. SNSメタタグ検証ログ（完成判定の根拠）
+
+- **Facebook Sharing Debugger**: `og:url/title/description/image` 正常。`fb:app_id` 未設定は運用上無視可。  
+- **Twitter Card Validator**: `summary_large_image` 認識・プレビュー正常。  
+- **整合性**: canonical / og:url / og:image / twitter:image の**完全一致**。
+
+---
+
+## 12. 用語集（Glossary）
+
+- **Move 37**: “定跡を一歩外す最小の創造”。小さく早い改良を日々積む姿勢。  
+- **Role Rate ×**: 役割別の絶対レートをUIで直接調整する方式。
+
+---
+
+## 13. ライセンス / 著作
+
+- © 2025 shorts-player-kit authors. All rights reserved.  
+- 公開ポリシーは後日 `LICENSE` に明記（現状は私的検証用途）。
