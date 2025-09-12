@@ -1,15 +1,15 @@
 {
   "$schema": "./schema.json",
-  "//": "Day 3 — Dry land emerges; vegetation sprouts. Page-1 placeholder; Page-3 Scripture (short excerpt); Page-4 Prologue (inventive title_key). Pure-effect for opening/transition/closing. A=Scripture/Prologue/Trivia, B=holy_of_holies & anti-Hellenism.",
-  "__contract__": "schema v3.2; pure-effect-pages; scripturePrologueIntro=true; sacred rhythm (>=1 newline; long text suggests \\n\\n)",
+  "//": "Day 3 — Dry land emerges; vegetation sprouts. Scripture narr has NO face emoji. Other content uses face emoji (1 per line).",
+  "__contract__": "schema v3.2; scripturePrologueIntro=true; short-form (narr has >=1 newline); iOS-first",
 
   "videoMeta": {
-    "dossierId": "genesis-day3-land-001",
-    "creationTimestamp": "2025-08-30T21:50:00+09:00",
+    "dossierId": "genesis-day3-land-002",
+    "creationTimestamp": "2025-09-12T23:59:00+09:00",
     "theme": "天地創造の第三日目",
-    "triviaTitle": "第三日—陸と海、芽ぐむいのち",
+    "triviaTitle": "第三日—陸と草木があらわれる",
     "thumbnailText": "【第三日】陸と草木",
-    "bannerText": "水は一処に、地は現れる",
+    "bannerText": "水は集まり、地が現れる",
     "meta": { "tts": { "filter": { "jaOnly": true } } },
     "ui": { "a11y": { "prefersReducedMotion": false } },
     "contract": {
@@ -22,25 +22,49 @@
         "scripturePrologueIntro": true
       },
       "versionThemeMap": { "A": "light", "B": "dark", "T": "dark" }
-    }
+    },
+    "notes": {
+      "shortsStyle": {
+        "audience": "mid-school short-form",
+        "lineRules": { "maxCharsPerLine": 16, "linesPerScene": 2 },
+        "emojiPolicy": "Scripture: no face emoji; Others: one face-like emoji per line",
+        "principles": [
+          "1文を短く、2行で言い切る",
+          "難語は言い換える（聖別=特別にする）",
+          "TTSの聞きやすさを優先して語順調整"
+        ]
+      }
+    },
+    "editLog": [
+      {
+        "date": "2025-09-12",
+        "reasoning": "短尺視聴層に合わせつつ、聖書本文への敬意と区別を両立",
+        "changes": [
+          "Themeを第三日に設定（陸と草木）",
+          "Scriptureのnarrは顔絵文字なし",
+          "Prologue/Trivia/B系は各行1つの顔絵文字で2行短文",
+          "A3=Scripture・A4=Prologue固定、B系必須条件維持"
+        ]
+      }
+    ]
   },
 
   "scenes": [
-    { "page": "1", "type": "placeholder", "sectionTag": "#Play", "title": "Play" },
+    { "page": "1", "type": "placeholder", "title": "Play" },
 
-    { "page": "2", "type": "effect", "sectionTag": "#Opening", "effectRole": "opening", "uiVersion": "T", "effect": "fade-in", "base": "#0b132b", "durationMs": 1600 },
+    { "page": "2", "type": "effect", "effectRole": "opening", "uiVersion": "T", "effect": "fade-in", "base": "#0b132b", "durationMs": 1600 },
 
     {
       "page": "3",
       "type": "content",
       "version": "A",
       "sectionTag": "#Scripture",
-      "title_key": "【創世記1:9–10 抄】",
-      "title": "水は集まり、地は現れよ",
+      "title_key": "【創世記 1章9–13節】",
+      "title": "水は集まり、地はあらわれた",
       "symbol": "📜",
-      "base": "#dbeafe",
+      "base": "#f0f9ff",
       "effect": "light-in",
-      "narr": "「天の下の水は一所に集まれ。乾いた地が現れよ。」\n乾いた地を『地』、水の集まりを『海』と名づけられた。"
+      "narr": "「天の下の水は一つ所に集まれ。」\n「乾いた地が現れよ。」"
     },
 
     {
@@ -49,11 +73,11 @@
       "version": "A",
       "sectionTag": "#Prologue",
       "title_key": "【整地と萌芽】",
-      "title": "場が整うと、芽が上がる",
+      "title": "場が整うと、芽が出る",
       "symbol": "🌱",
-      "base": "#fef3c7",
+      "base": "#fff7ed",
       "effect": "slide-up",
-      "narr": "分かたれることは、乏しさではない。\n秩序づけられた場に、いのちの通路が開く。"
+      "narr": "地が顔を出す。🙂\n草木が芽ぐむ。😊"
     },
 
     {
@@ -61,15 +85,15 @@
       "type": "content",
       "version": "A",
       "sectionTag": "#Trivia1",
-      "title_key": "【語根】",
-      "title": "קָוָה：集める／希う",
+      "title_key": "【דֶּשֶׁא】",
+      "title": "デシェ＝若草",
       "symbol": "ℹ️",
       "base": "#e0f2fe",
       "effect": "zoom-in",
-      "narr": "「集まる（קָוָה）」は『希う』にも通う。\n海が寄り合うとき、希望が地を露わにする。"
+      "narr": "「デシェ」は若い草。😄\n小さな芽が広がる。🤗"
     },
 
-    { "page": "6", "type": "effect", "sectionTag": "#Transition", "effectRole": "transition", "uiVersion": "T", "effect": "veil-sweep", "base": "#0f172a", "durationMs": 1400 },
+    { "page": "6", "type": "effect", "effectRole": "transition", "uiVersion": "T", "effect": "veil-sweep", "base": "#0f172a", "durationMs": 1400 },
 
     {
       "page": "7",
@@ -77,11 +101,11 @@
       "version": "B",
       "sectionTag": "#Sanctum",
       "title_key": "【聖別】",
-      "title": "取り分が祝福の回路を開く",
+      "title": "取り分を主に返す",
       "symbol": "🕯️",
       "base": "#0a3a5a",
       "effect": "fade-in",
-      "narr": "境界は剥奪ではない。\n**創造主**に帰す取り分を定める知恵であり、祝福の流路である。",
+      "narr": "最初の実りをささげる。🙂\n感謝で流れが開く。😌",
       "sanctum": "holy_of_holies",
       "polemicAxis": "Hellenism_vs_Hebraism",
       "doctrineTags": ["HolyOfHolies", "CovenantCentered"]
@@ -93,16 +117,16 @@
       "version": "B",
       "sectionTag": "#AntiHellenism",
       "title_key": "【反駁】",
-      "title": "効用偏重を越えて、在ることの善",
+      "title": "効率より、在ることの善",
       "symbol": "⚖️",
       "base": "#083344",
       "effect": "zoom-in",
-      "narr": "善は役立ちの報酬にあらず。\n第三日の秩序は、存在それ自体の善を証する。",
+      "narr": "役立ちだけで測らない。🤨\n在ること自体を尊ぶ。🙂",
       "sanctum": "holy_of_holies",
       "polemicAxis": "Hellenism_vs_Hebraism",
       "doctrineTags": ["DepartureFromHellenism", "SpiritLedTransformation"]
     },
 
-    { "page": "9", "type": "effect", "sectionTag": "#Closing", "effectRole": "closing", "uiVersion": "B", "effect": "fade-to-black", "base": "#020617", "durationMs": 1800 }
+    { "page": "9", "type": "effect", "effectRole": "closing", "uiVersion": "B", "effect": "fade-to-black", "base": "#020617", "durationMs": 1800 }
   ]
 }
