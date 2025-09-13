@@ -185,6 +185,24 @@ Notes:
 
     '</div>';
 
+  // [Hard Reload Button] — DOM構築完了後に #dbg-controls へ追加
+  (function addHardReloadBtn(){
+    var c = document.getElementById('dbg-controls'); if (!c) return;
+    var b = document.createElement('button');
+    b.setAttribute('data-act','hardreload');
+    b.textContent = '⟲ Hard Reload';
+    c.appendChild(b);
+    try {
+      // styleBtn は同スコープだが安全のため直指定
+      b.style.border='1px solid rgba(255,255,255,.35)';
+      b.style.background='rgba(255,255,255,.08)';
+      b.style.color='#fff'; b.style.borderRadius='6px';
+      b.style.cursor='pointer'; b.style.fontSize='12px';
+      b.style.lineHeight='1'; b.style.padding='0 10px';
+      b.style.height='34px'; b.style.minHeight='34px';
+    } catch(_) {}
+  })();
+
   /* ---------- refs ---------- */
   function $(s){ return host.querySelector(s); }
   var bar=$('.dbg-bar'), body=$('#dbg-body'), tgl=$('#dbg-toggle'), arrow=$('#dbg-arrow');
@@ -463,17 +481,45 @@ Notes:
     var t=e.target;
     while (t && t!==host && !(t.tagName==='BUTTON' && t.hasAttribute('data-act'))) t=t.parentNode;
     if (!t || t===host) return;
-    var act=t.getAttribute('data-act'), P=(window.__player||{});
-    if (act==='prev' && P.prev) P.prev();
-    if (act==='play' && P.play) P.play();
-    if (act==='stop' && P.stop) P.stop();
-    if (act==='next' && P.next) P.next();
+
+    var act = t.getAttribute('data-act'), P=(window.__player||{});
+
+    if (act==='prev'    && P.prev)    P.prev();
+    if (act==='play'    && P.play)    P.play();
+    if (act==='stop'    && P.stop)    P.stop();
+    if (act==='next'    && P.next)    P.next();
     if (act==='restart' && P.restart) P.restart();
-    if (act==='goto' && P.goto && gotoInp){ var n=(Number(gotoInp.value)|0); if (n>=1) P.goto(n-1); }
+    if (act==='goto'    && P.goto && gotoInp){ var n=(Number(gotoInp.value)|0); if (n>=1) P.goto(n-1); }
+
+    // hardreload はクリックハンドラ「内」に置く（act のスコープ内）
+    if (act==='hardreload') {
+      try {
+        if ('caches' in window) {
+          caches.keys().then(function(keys){
+            return Promise.all(keys.map(function(id){ return caches.delete(id); }));
+          }).finally(function(){
+            var u=new URL(location.href);
+            u.searchParams.set('rev', Date.now()); // クエリバスター
+            location.replace(u.toString());        // 履歴を汚さず再読込
+          });
+        } else {
+          var u=new URL(location.href);
+          u.searchParams.set('rev', Date.now());
+          location.replace(u.toString());
+        }
+      } catch(_) {
+        location.reload(); // 最終フォールバック
+      }
+      return;
+    }
   });
+
   if (gotoInp){
     gotoInp.addEventListener('keydown', function(ev){
-      if (ev.key==='Enter'){ var P=(window.__player||{}); var n=(Number(gotoInp.value)|0); if (P.goto && n>=1) P.goto(n-1); }
+      if (ev.key==='Enter'){
+        var P=(window.__player||{}); var n=(Number(gotoInp.value)|0);
+        if (P.goto && n>=1) P.goto(n-1);
+      }
     });
   }
 
