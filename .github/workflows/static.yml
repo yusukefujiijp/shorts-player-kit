@@ -3,6 +3,7 @@ name: Deploy static content to Pages
 on:
   push:
     branches: ["main"]
+  # 差分がないときやキャッシュ疑いの再配信に
   workflow_dispatch:
 
 permissions:
@@ -10,28 +11,37 @@ permissions:
   pages: write
   id-token: write
 
+# 最新だけを有効化して競合・上書き事故を防止
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy:
+    name: Build & Deploy (public/)
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       # 公開用ディレクトリを生成（リポ構成は不変）
-      # 不要物は rsync の --exclude で除外
+      # rsync で “不要物は除外” しつつ public/ へ同期
       - name: Prepare public directory (exclude non-public)
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p public
+
           rsync -av --delete \
             --exclude 'backup/' \
             --exclude '_archives/' \
@@ -50,8 +60,46 @@ jobs:
             --exclude 'secrets/' --exclude '*.key' --exclude '*.pem' --exclude '*.p12' --exclude '.env*' \
             ./ public/
 
-      # 公開は public/ のみ
-      - name: Upload artifact
+          # Jekyllを確実に無効化（public/ 側に配置）
+          if [ ! -f public/.nojekyll ]; then
+            touch public/.nojekyll
+            echo "Created public/.nojekyll"
+          else
+            echo "Kept existing public/.nojekyll"
+          fi
+
+          # 404 が無い場合は最小ページを生成（public/ 側）
+          if [ ! -f public/404.html ]; then
+            cat > public/404.html <<'HTML'
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>404 Not Found | shorts-player-kit</title>
+<meta name="robots" content="noindex">
+<style>
+  html,body{margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  main{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:4rem 2rem;text-align:center}
+  h1{font-size:1.75rem;margin:0 0 .5rem}
+  p{color:#555;margin:.25rem 0}
+  a{display:inline-block;margin-top:1rem;text-decoration:none;border:1px solid #222;padding:.5rem 1rem;border-radius:.5rem}
+</style></head>
+<body><main><div>
+  <h1>404 Not Found</h1>
+  <p>お探しのページは移動または削除された可能性があります。</p>
+  <p><a href="./">トップへ戻る</a></p>
+</div></main></body></html>
+HTML
+            echo "Generated public/404.html (fallback)"
+          else
+            echo "Kept existing public/404.html"
+          fi
+
+          # index.html が無い場合は警告（デプロイ自体は続行）
+          if [ ! -f public/index.html ]; then
+            echo "::warning::public/index.html が見つかりません（トップ直アクセスで404になります）"
+          fi
+
+      - name: Upload artifact (public/)
         uses: actions/upload-pages-artifact@v3
         with:
           path: public
