@@ -1,131 +1,69 @@
-# a-Shell Command Policy v1.0 (Working Copy Edition)
+a-Shell Command Policy v1.1（AI用・厳守）
 
-この文書は **iOS の a-Shell** で“確実に動く”実行だけに絞り、**Git 操作は *Working Copy* に全面委任**する運用方針です。
-目的は **Copy & Paste しても壊れにくい手順**で、初心者でも迷わず再現できること。
+1) 根拠（ソース・オブ・トゥルース）
+	•	直近の docs/tools/ashell-command-inventory.md の 最新 Snapshot（あなたが貼ってくれた一覧）を正とする。
+	•	AI はコマンド提案の前に、そのコマンド名が Snapshot に載っているかを前提に判断する（載ってないものは提案しない）。
 
----
+2) 禁止・非推奨（この環境では提案しない）
+	•	git（代わりに Working Copy を GUI クライアントとして使用）
+	•	which（必要なら Python で代替：shutil.which()）
+	•	printf（Python の print(...) で代替。echo で足りる場合は echo）
+	•	nl（awk の '{print NR" "$0}' で代替）
+	•	test / [ … ] での存在確認（Python の os.path で代替）
+	•	長いヒアドキュメント（改行貼付け事故が多発するため）
+	•	連結しまくったワンライナー（; や && 多用）
+→ 1行ずつ実行できる形で提示する
 
-## 0. 前提（このプロジェクトの約束）
+3) 推奨（この順で選ぶ）
+	•	最優先：Python（python3 -c か小スクリプト）
+例：ファイル出力・整形・存在判定・環境確認など
+	•	次点：シンプルなPOSIXコマンド（echo, cat, ls, cp, mv, sed, awk, grep, mkdir, pwd など）
+	•	ファイル作成は echo >> か pico/nano/vim で手入力（自動インデントに注意）
+	•	外部フォルダは pickFolder → bookmark <name> → cd ~<name> / jump <name>
 
-- **Git は使わない**（a‑Shell 側では `git` / `lg` / `lg2` を前提にしない）。  
-  バージョン管理・コミット・プッシュは **Working Copy** アプリで行う。
-- a‑Shell は **ローカル作業（編集/整形/テスト/簡易サーバ）専用**。  
-  長文の投入には **エディタ（pico/vim）** または **クリップボード（pbpaste）** を使う。
-- 外部フォルダは **Sandbox/ブックマーク** 機能で開く（`pickFolder` → `bookmark` → `jump` / `cd ~<mark>`）。
-- 利用可能コマンドは端末で `help -l` して現物確認する。
+4) コマンド提示スタイル（ミス減らしのための約束）
+	•	すべて 1行ずつのコードブロックで提示（コピペ → Return で必ず完結）。
+	•	生成物はすぐ確認コマンドも続けて提示（pwd, ls -al, cat など）。
+	•	ファイル追記は 必ず >>、上書きが必要なら「上書きである」ことを明記して > を使う。
+	•	編集系（pico/nano）は “保存・終了キー” を毎回明示。
 
----
+5) 代表的な代替レシピ（最短メモ）
+	•	which foo → Python で
 
-## 1. ゴールデンルール
+python3 -c "import shutil,sys;print(shutil.which(sys.argv[1]) or 'NA')" foo
 
-1) **VCS を a‑Shell に持ち込まない**  
-   - “Git っぽい”コマンドを探さない。**Working Copy でやる**と決める。
-2) **未搭載/相性悪コマンドの代替を常備**  
-   - `which` → **Python**: `import shutil; print(shutil.which("cmd"))`
-   - `printf` → **Python**: `print(...)`（または単純用途は `echo`）
-   - `nl` → **awk**: `awk '{print NR, $0}'`
-   - `test` / `[ … ]` → **Python**: `from pathlib import Path; print(Path("x").exists())`
-3) **長文は Heredoc 乱用を避ける**  
-   - 画面で貼るなら **pico/vim**、他アプリからは **pbpaste > file** が安全。
-4) **外部フォルダはブックマーク経由**  
-   - `pickFolder` → `bookmark spk` → 次回から `jump spk` / `cd ~spk`。
 
----
+	•	nl file.txt → awk で
 
-## 2. 推奨・非推奨（抜粋）
+awk '{print NR\" \"$0}' file.txt
 
-| 用途 | 非推奨（または不使用） | 採用方針 / 代替 |
-|---|---|---|
-| バージョン管理 | `git`, `lg`, `lg2` | **Working Copy** でコミット/プッシュ |
-| 位置検索 | `which` | **Python** `shutil.which` |
-| 行番号付加 | `nl` | **awk** `awk '{print NR, $0}'` |
-| 整形 | `printf` | **Python** `print()` / `echo` |
-| 条件分岐 | `test` / `[ … ]` | **Python** `pathlib.Path(...).exists()` |
-| 長文投入 | `cat <<'EOF' ... EOF` | **pico/vim** または **pbpaste > file** |
-| 外部フォルダ移動 | 生パス直指定 | **`pickFolder`→`bookmark`→`jump`/`cd ~mark`** |
 
-> 端末差を吸収するため、**Python/awk ベース**の代替を標準化します。
+	•	存在確認（ファイル/ディレクトリ）
 
----
+python3 -c "import os,sys; p=sys.argv[1]; print('OK' if os.path.exists(p) else 'NO')" path/to/thing
 
-## 3. よく使うスニペット（1行ずつ安全に）
 
-### 3.1 ブックマークで目的地を開く（初回のみ）
-```sh
-pickFolder
-```
-```sh
-bookmark spk
-```
-> 次回以降は：
-```sh
-jump spk        # または  cd ~spk
-```
 
-### 3.2 長文ファイルの作成
-**エディタ方式**
-```sh
-mkdir -p docs/tools
-```
-```sh
-pico docs/tools/ashell-command-policy.md    # 貼り付け → Ctrl+O → Enter → Ctrl+X
-```
+6) ヒアドキュメントを使わずにファイルを作る（安全版テンプレ）
+	•	まず空行（区切り）を足して見やすく：
 
-**クリップボード方式**
-```sh
-mkdir -p docs/tools
-```
-```sh
-pbpaste > docs/tools/ashell-command-policy.md
-```
+echo "" >> docs/tools/ashell-command-inventory.md
 
-### 3.3 代替コマンド例（現物確認）
-```sh
-help -l | grep bookmark
-```
-```sh
-python3 - <<'PY'
-import shutil; print(shutil.which("python3"))
-PY
-```
-```sh
-echo "a
-b
-c" | awk '{print NR, $0}'
-```
 
----
+	•	見出しや小さな行は echo で積む：
 
-## 4. a‑Shell でやること / Working Copy でやること
+echo "## Snapshot: $(date '+%Y-%m-%d %H:%M:%S %Z')" >> docs/tools/ashell-command-inventory.md
 
-### a‑Shell（やる）
-- `python3 -m http.server 8080` でローカル検証（`Ctrl+C` で停止）
-- 簡易スクリプト実行、ファイル整形、テキスト前処理
-- `pico` や `pbpaste` での文書作成・編集
 
-### Working Copy（やる）
-- 変更の **ステージ/コミット/プッシュ（VCS 全般）**
-- ブランチ、差分確認、リモート管理
+	•	中～長文は Python で一発書き：
 
-> “**編集と検証は a‑Shell**、**履歴管理は Working Copy**”に役割分担。迷いを断ちます。
+python3 -c "open('docs/tools/sample.txt','w',encoding='utf-8').write('hello\\nworld\\n')"
 
----
 
-## 5. トラブル対処（FAQ）
 
-- `which: command not found` → Python で代替：  
-  `python3 -c "import shutil; print(shutil.which('cmd'))"`
-- Heredoc で貼り付けが固まる → **Ctrl+C** で抜け、**pico/pbpaste** に切り替える。
-- 改行・インデント崩れ → **1 行ずつのコードブロック貼り**を徹底する。
-
----
-
-## 6. 運用の型（Next Step）
-
-1. **docs 直下の「運用索引」へ本ポリシーへのリンクを追記**  
-2. 端末の `help -l` 出力を `docs/tools/ashell-command-inventory.md` に **append-only** で保存  
-3. README の “長文貼り付けの作法” を **pico/pbpaste 推奨**で簡潔に明記
-
----
-
-*このポリシーは “壊れない実行” を最優先に設計されています。必要に応じてアップデートしてください。*
+7) a-Shell 固有機能の基本
+	•	pickFolder → 任意フォルダを開く（iCloudや他アプリ領域を含む）
+	•	bookmark <name> → 現在地にマーク
+	•	showmarks → 登録を一覧
+	•	cd ~<name> / jump <name> → マークへ移動
+	•	help -l → 利用可能コマンド一覧（今回の Snapshot）
