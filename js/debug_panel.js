@@ -10,6 +10,7 @@ Notes:
   - iOS防御: voiceschanged / ttsvoicesready / visibilitychange で再描画。
   - 既定ボイス・フラグは debug_config.js に集約（LS > config > Auto の優先で適用）。
   - フェーズ1: 内部の論理分割（view/actions/state/tts）を関数粒度で整理（単一ファイル維持）。
+  - 追加: Hard Reloadボタンは debug_config.js の buttons.hardreload=true のときのみ表示。
 */
 
 ;(function() {
@@ -24,7 +25,7 @@ Notes:
   var CFG = {
     collapsedDefault: (typeof IN.collapsedDefault === 'boolean') ? IN.collapsedDefault : false,
     sections: Object.assign({ status:true, note:false, controls:true, goto:true, ttsFlags:true, voices:true, baseRate:false }, (IN.sections||{})),
-    buttons:  Object.assign({ prev:true, next:true, play:true, stop:true, restart:true, goto:true }, (IN.buttons||{})),
+    buttons:  Object.assign({ prev:true, next:true, play:true, stop:true, restart:true, goto:true, hardreload:false }, (IN.buttons||{})),
     locks:    Object.assign({ allowTTSFlagEdit:true, allowVoiceSelect:true }, (IN.locks||{})),
     rate:     Object.assign({ min:0.5, max:2.0, step:0.1 }, (IN.rate||{})),
     rolesRate:Object.assign({ min:0.5, max:2.0, step:0.1, defaultAbs:1.4 }, (IN.rolesRate||{})),
@@ -82,7 +83,6 @@ Notes:
     '<button data-act="goto">Go</button>'+
     '</label>'+
     '</div>'+
-    // baseRate (off by default)
     (CFG.sections.baseRate?('<div id="dbg-rate" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:6px 0;">'+
       '<span style="opacity:.85;font-size:12px;">Rate:</span>'+
       '<input id="rateRange" type="range" style="width:200px;height:28px;">'+
@@ -150,7 +150,7 @@ Notes:
     ['#mulTagN','#mulTKN','#mulTN','#mulNN'].forEach(function(sel){ var el=host.querySelector(sel); if(el) styleField(el,'70px'); });
     [ckTag,ckTK,ckT,ckN].forEach(function(c){ if(c) styleCheck(c); });
 
-    if (tgl) tgl.addEventListener('click', function(){ // collapse toggle
+    if (tgl) tgl.addEventListener('click', function(){
       var now = (body && body.style.display!=='none');
       if (body) body.style.display = now ? 'none':'block';
       if (arrow) arrow.textContent = now ? '▸':'▾';
@@ -158,9 +158,11 @@ Notes:
     });
   })();
 
-  // Hard Reload ボタン（DOM構築後に挿入）
+  // Hard Reload ボタン（configゲート + DOM構築後に挿入）
   (function addHardReloadBtn(){
+    if (!CFG.buttons.hardreload) return;
     var c=document.getElementById('dbg-controls'); if(!c) return;
+    if (c.querySelector('button[data-act="hardreload"]')) return; // 二重追加防止
     var b=document.createElement('button'); b.setAttribute('data-act','hardreload'); b.textContent='⟲ Hard Reload'; c.appendChild(b);
     try{ styleBtn(b); }catch(_){}
   })();
@@ -272,7 +274,6 @@ Notes:
   }
 
   /* ============================= wire (events) ============================= */
-  // controls: 単一点のクリック委譲（actスコープをこの関数内に閉じる）
   host.addEventListener('click', function(e){
     var t=e.target; while (t && t!==host && !(t.tagName==='BUTTON' && t.hasAttribute('data-act'))) t=t.parentNode;
     if (!t || t===host) return;
