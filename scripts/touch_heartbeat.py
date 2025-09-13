@@ -1,17 +1,22 @@
-from datetime import datetime, timedelta, timezone
-import re, pathlib
+#!/usr/bin/env python3
+from __future__ import annotations
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
 
 JST = timezone(timedelta(hours=9))
-stamp = datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S JST")
 
-p = pathlib.Path("README.md")
-s = p.read_text(encoding="utf-8")
-new = re.sub(r"- \*\*Last touched \(JST\)\*\*: .*$",
-             f"- **Last touched (JST)**: {stamp}",
-             s, flags=re.M)
+def repo_root() -> Path:
+    # このスクリプトが scripts/ にある前提で 1つ上がリポ直下
+    return Path(__file__).resolve().parent.parent
 
-if s != new:
-    p.write_text(new + ("\n" if not new.endswith("\n") else ""), encoding="utf-8")
-    print("updated:", stamp)
-else:
-    print("no-change (already up-to-date)", stamp)
+def main() -> None:
+    root = repo_root()
+    log = root / "meta" / "logs" / "heartbeat.log"  # ← ドット無し
+    log.parent.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S %z")
+    with log.open("a", encoding="utf-8") as f:
+        f.write(f"{stamp} touched\n")
+    print(f"[OK] wrote heartbeat: {log.relative_to(root)}")
+
+if __name__ == "__main__":
+    main()
