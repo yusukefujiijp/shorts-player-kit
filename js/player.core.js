@@ -34,6 +34,18 @@ Notes (delta):
 		return bg;
 	}
 
+	/* ---------- Banner (fixed top) ---------- */
+	let __bannerDefault = '';
+
+	function setBannerText(txt) {
+		try {
+			const el = document.getElementById('banner');
+			if (!el) return;
+			const s = String(txt || '').trim();
+			el.textContent = s || ' '; // 空でも高さを維持するため半角空白
+		} catch (_) {}
+	}
+
 	function setBg(c) {
 		try {
 			if (!c) return;
@@ -456,6 +468,13 @@ Notes (delta):
 			const data = await res.json();
 			const scenes = data.scenes || data || [];
 			State.scenes = scenes;
+
+			// バナー文言を videoMeta から反映（fallback: triviaTitle → thumbnailText → theme）
+			try {
+				const vm = (data && data.videoMeta) || {};
+				__bannerDefault = vm.bannerText || vm.triviaTitle || vm.thumbnailText || vm.theme || '';
+				setBannerText(__bannerDefault);
+			} catch (_) {}
 
 			try {
 				// 1) tts-utils セットアップ（scenes.json 側の meta を適用）
