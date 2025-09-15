@@ -1,20 +1,10 @@
 /*!
 Project: shorts-player-kit
 File:    ./style.css
-Role:    Visual-only (veils/band/typography/effects). Base background is JS-controlled.
+Role:    Visual-only (veils/band/typography/effects + Debug Panel polish)
 Depends: body.version-(A|B|T), --symbol-bg-color (JS supplies)
-Memos (quick bugs):
-  - Never use !important on #bgColor (JS paints base)
-  - Debug panel must sit at bottom: JS sets inline position:fixed; this CSS only pads safe-area
-  - Page-1 is “Play-only” (UI note; logic lives in player.core.js)
-Quick Verify:
-  - Switch body.version-* changes veil tone
-  - .symbol-bg reflects --symbol-bg-color across full-bleed band
-  - Debug panel sticks to bottom (safe-area respected), play button clickable under banner
-NS-Core: Propose / Justify / Min-Execute / Verify / Record
 */
 
-/* ========== Variables ========== */
 :root{
   /* Text & shadow (A=light / B=dark) */
   --txt-A:#2c2c2c; --bg-A:#f9f9f7; --shadow-A:1px 1px 3px rgba(0,0,0,.25);
@@ -44,6 +34,28 @@ NS-Core: Propose / Justify / Min-Execute / Verify / Record
   /* Veils (A=薄明 / B,T=半暗) */
   --veilA-top:.12; --veilA-bottom:.06;
   --veilB-top:.32; --veilB-bottom:.18;
+
+  /* ==== Debug Chips (state badges) ==== */
+  --chip-fg:#ffffff;
+  --chip-gap:8px;
+  --chip-pad-y:.28rem;
+  --chip-pad-x:.6rem;
+  --chip-radius:999px;
+  --chip-weight:700;
+  --chip-shadow:0 0 0 rgba(0,0,0,0);
+
+  /* speaking / paused / pending colors (dark panel上で十分コントラストを確保) */
+  --chip-speaking-bg:#15803d; /* green-700 */
+  --chip-speaking-bd:#065f46;
+  --chip-speaking-fg:#ffffff;
+
+  --chip-paused-bg:#b45309;   /* amber-700 */
+  --chip-paused-bd:#92400e;
+  --chip-paused-fg:#ffffff;
+
+  --chip-pending-bg:#1d4ed8;  /* blue-700 */
+  --chip-pending-bd:#1e40af;
+  --chip-pending-fg:#ffffff;
 }
 
 /* ========== Reset ========== */
@@ -57,8 +69,7 @@ html,body{
   transition:color .8s, background-color 1.2s;
   touch-action:manipulation;
 }
-/* 初期フォールバック（JS未初期化時の白フラ防止） */
-body{ background-color:var(--bg-A); }
+body{ background-color:var(--bg-A); } /* 初期フォールバック */
 
 /* ========== Layout ========== */
 #wrapper{
@@ -82,10 +93,7 @@ body{ background-color:var(--bg-A); }
 #bgColor,#bgBreath{ position:fixed; inset:0; z-index:0; pointer-events:none; }
 #bgColor{ transition:background-color 1.2s ease; }
 
-/* Veils via body.version-* */
-#bgColor::after{
-  content:""; position:absolute; inset:0; pointer-events:none;
-}
+#bgColor::after{ content:""; position:absolute; inset:0; pointer-events:none; }
 body.version-A #bgColor::after{
   background:linear-gradient(to bottom,
     rgba(255,255,255,var(--veilA-top)),
@@ -222,26 +230,20 @@ body.version-T .symbol-bg::after{
 
 /* ========== Effects (overlay) ========== */
 .effect-container{ position:fixed; inset:0; z-index:3; pointer-events:none; }
-
-/* Light-in */
 @keyframes sk-light-in {
   0%{ opacity:1; background:radial-gradient(circle at center, white 0%, black 100%); }
   100%{ opacity:0; background:radial-gradient(circle at center, white 200%, black 300%); }
 }
 .light-in{ animation: sk-light-in 1.5s ease-out forwards; }
-
-/* Burn-out / Flame-out (aliases) */
 @keyframes sk-flame-out { 0%{opacity:0;} 50%{opacity:1;} 100%{opacity:0;} }
 .flame-out, .burn-out{
   background:radial-gradient(circle at bottom, #ff4800 0%, #ff7400 30%, #ffb300 60%, transparent 100%);
   animation:sk-flame-out 1.5s ease-in forwards;
 }
-
-/* Flash */
 @keyframes flash{ 0%{opacity:.9;} 100%{opacity:0;} }
 .flash{ background:#fff; animation:flash .4s ease-out; }
 
-/* ========== Debug Panel (safe-area pin; 見た目のみ。位置はJS) ========== */
+/* ========== Debug Panel (safe-area pin; 見た目のみ) ========== */
 #debug-panel{
   padding-left:max(10px, env(safe-area-inset-left,0px));
   padding-right:max(10px, env(safe-area-inset-right,0px));
@@ -249,24 +251,36 @@ body.version-T .symbol-bg::after{
   will-change:transform;
 }
 #debug-panel .dbg-bar{
-  display:flex; align-items:center; gap:8px;
-  padding:6px 8px; background:rgba(0,0,0,.78);
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  padding:6px 8px; background:rgba(0,0,0,.82);
   border-top:1px solid rgba(255,255,255,.15); backdrop-filter:blur(4px);
 }
-#debug-panel .dbg-toggle{
-  appearance:none; border:1px solid rgba(255,255,255,.35);
-  background:rgba(255,255,255,.08); color:#fff;
-  padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px; line-height:1;
+#debug-panel .dbg-status{ 
+  display:flex; align-items:center; gap:var(--chip-gap); flex-wrap:wrap;
+  font-size:12px; opacity:.95; 
 }
-#debug-panel .dbg-toggle:hover{ background:rgba(255,255,255,.15); }
-#debug-panel .dbg-status{ font-size:12px; opacity:.9; margin-left:8px; }
 
+/* Buttons / inputs (視認性向上: focus-ring) */
+#debug-panel button,
+#debug-panel input,
+#debug-panel select{
+  font-size:16px; min-height:44px;
+}
+#debug-panel button:focus-visible,
+#debug-panel input:focus-visible,
+#debug-panel select:focus-visible{
+  outline:2px solid rgba(255,255,255,.9);
+  outline-offset:2px;
+}
+
+/* Controls row */
 #debug-panel .dbg-body{
   max-height:44vh; overflow:auto;
-  padding:8px; background:rgba(0,0,0,.68);
+  padding:8px; background:rgba(0,0,0,.70);
   border-top:1px solid rgba(255,255,255,.15);
 }
 
+/* Note / rows / buttons */
 #debug-panel .dbg-row{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0; }
 #debug-panel .dbg-note{
   width:100%; padding:6px 8px;
@@ -286,22 +300,78 @@ body.version-T .symbol-bg::after{
 #debug-panel .dbg-buttons>button.accent-red{
   border-color:rgba(255,120,120,.55); background:rgba(255,120,120,.15);
 }
+
+/* Goto field */
 #debug-panel .goto{ display:inline-flex; align-items:center; gap:4px; margin-left:4px; }
 #debug-panel .goto input{
   width:64px; padding:4px 6px; border-radius:4px; border:1px solid rgba(255,255,255,.25);
   background:rgba(0,0,0,.2); color:#fff; font-size:12px;
 }
-#debug-panel .dbg-tts{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-#debug-panel .dbg-tts .grp-label{ opacity:.85; font-size:12px; margin-right:4px; }
 
 /* 折り畳み時：バー以外クリック透過（Playボタン保護） */
 #debug-panel.collapsed{ pointer-events:none; }
 #debug-panel.collapsed .dbg-bar{ pointer-events:auto; }
+
+/* ====== State Chips (new) ====== */
+/* 互換: .dbg-chip / .dbg-badge の両方に適用 */
+#debug-panel .dbg-chip, 
+#debug-panel .dbg-badge{
+  display:inline-flex; align-items:center; gap:.5em;
+  padding:var(--chip-pad-y) var(--chip-pad-x);
+  border-radius:var(--chip-radius);
+  font-weight:var(--chip-weight); font-size:12px; line-height:1;
+  letter-spacing:.02em;
+  border:1px solid transparent;
+  color:var(--chip-fg);
+  text-shadow:none; white-space:nowrap;
+  box-shadow:var(--chip-shadow);
+}
+
+/* speaking / paused / pending */
+#debug-panel .dbg-chip.speaking, 
+#debug-panel .dbg-badge.speaking{
+  background:var(--chip-speaking-bg); border-color:var(--chip-speaking-bd); color:var(--chip-speaking-fg);
+}
+#debug-panel .dbg-chip.paused, 
+#debug-panel .dbg-badge.paused{
+  background:var(--chip-paused-bg); border-color:var(--chip-paused-bd); color:var(--chip-paused-fg);
+}
+#debug-panel .dbg-chip.pending, 
+#debug-panel .dbg-badge.pending{
+  background:var(--chip-pending-bg); border-color:var(--chip-pending-bd); color:var(--chip-pending-fg);
+}
+
+/* 小さな丸アイコン（視覚的な“信号”） */
+#debug-panel .dbg-chip::before,
+#debug-panel .dbg-badge::before{
+  content:""; width:.5em; height:.5em; border-radius:50%; background:currentColor; opacity:.9;
+}
+#debug-panel .dbg-chip.paused::before,
+#debug-panel .dbg-badge.paused::before{ opacity:.85; }
+#debug-panel .dbg-chip.pending::before,
+#debug-panel .dbg-badge.pending::before{ opacity:.85; }
+
+/* 高コントラスト環境での強調 */
+@media (prefers-contrast: more){
+  #debug-panel .dbg-chip,
+  #debug-panel .dbg-badge{
+    box-shadow:0 0 0 2px rgba(0,0,0,.35) inset;
+  }
+  #debug-panel .dbg-chip.speaking, #debug-panel .dbg-badge.speaking{
+    background:#166534; border-color:#065f46; /* deeper green */
+  }
+  #debug-panel .dbg-chip.paused, #debug-panel .dbg-badge.paused{
+    background:#92400e; border-color:#7c2d12; /* deeper amber/brown */
+  }
+  #debug-panel .dbg-chip.pending, #debug-panel .dbg-badge.pending{
+    background:#1e40af; border-color:#1e3a8a; /* deeper blue */
+  }
+}
 
 /* ========== Optional FX Canvas ========== */
 #bgFX{ position:fixed; inset:0; z-index:0; pointer-events:none; mix-blend-mode:screen; opacity:.9; }
 @media (prefers-reduced-motion:reduce){ #bgFX{ display:none; } }
 body.version-B #bgFX, body.version-T #bgFX{ mix-blend-mode:lighten; opacity:.7; }
 
-/* ========== Mobile-friendly input sizing ========== */
+/* ========== Mobile-friendly input sizing (再掲) ========== */
 input,select,textarea,button{ font-size:16px; min-height:44px; }
