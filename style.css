@@ -3,12 +3,6 @@ Project: shorts-player-kit
 File:    ./style.css
 Role:    Visual-only (veils/band/typography/effects + Debug Panel polish)
 Depends: body.version-(A|B|T), --symbol-bg-color (JS supplies)
-
-Refactor notes:
-- #dbg-status を正しくスタイルできるようセレクタを `.dbg-status` → `#dbg-status` に整理
-- Debugバッジ（speaking/paused/pending）の配色・コントラストを強化
-- prefers-reduced-motion / prefers-contrast を尊重
-- debug_panel.js が注入する最小CSSよりも高い詳細度で上書き（衝突回避）
 */
 
 /* ========== Variables ========== */
@@ -17,19 +11,15 @@ Refactor notes:
   --txt-A:#2c2c2c; --bg-A:#f9f9f7; --shadow-A:1px 1px 3px rgba(0,0,0,.25);
   --txt-B:#eaeaec; --bg-B:#1c1c1e; --shadow-B:0 0 8px rgba(255,255,255,.25);
 
-  /* Band color from JS */
+  /* Symbol band */
   --symbol-bg-color: transparent;
-
-  /* Band tone tweak */
   --band-brightness:.92;
   --band-sat:1.06;
-
-  /* Hairlines (上下1px) */
   --band-line-width:1px;
   --band-line-alpha-A:.06;
   --band-line-alpha-B:.12;
 
-  /* Section tag (#Trivia N) */
+  /* Section tag */
   --section-tag-gap-bottom:.5rem;
   --section-tag-min:.8rem; --section-tag-fluid:2.2vw; --section-tag-max:1.0rem;
   --tag-radius:999px; --tag-bg-alpha:.14;
@@ -38,31 +28,9 @@ Refactor notes:
   /* Band paddings */
   --symbol-outer-gap-y:1rem; --symbol-inner-gap-y:.30rem;
 
-  /* Veils (A=薄明 / B,T=半暗) */
+  /* Veils */
   --veilA-top:.12; --veilA-bottom:.06;
   --veilB-top:.32; --veilB-bottom:.18;
-
-  /* ==== Debug Chips (state badges) ==== */
-  --chip-fg:#ffffff;
-  --chip-gap:8px;
-  --chip-pad-y:.28rem;
-  --chip-pad-x:.6rem;
-  --chip-radius:999px;
-  --chip-weight:700;
-  --chip-shadow:0 0 0 rgba(0,0,0,0);
-
-  /* speaking / paused / pending colors (dark panel上で十分コントラストを確保) */
-  --chip-speaking-bg:#15803d; /* green-700 */
-  --chip-speaking-bd:#065f46;
-  --chip-speaking-fg:#ffffff;
-
-  --chip-paused-bg:#b45309;   /* amber-700 */
-  --chip-paused-bd:#92400e;
-  --chip-paused-fg:#ffffff;
-
-  --chip-pending-bg:#1d4ed8;  /* blue-700 */
-  --chip-pending-bd:#1e40af;
-  --chip-pending-fg:#ffffff;
 }
 
 /* ========== Reset ========== */
@@ -85,7 +53,7 @@ body{ background-color:var(--bg-A); } /* 初期フォールバック */
   display:flex; flex-direction:column; justify-content:center; align-items:center;
 }
 
-/* Banner (non-intercept overlay) */
+/* Banner */
 #banner{
   position:fixed; top:0; left:0; right:0; width:100%;
   padding:calc(.5rem + env(safe-area-inset-top,0px)) .5rem .5rem;
@@ -99,18 +67,13 @@ body{ background-color:var(--bg-A); } /* 初期フォールバック */
 /* ========== Background Layers ========== */
 #bgColor,#bgBreath{ position:fixed; inset:0; z-index:0; pointer-events:none; }
 #bgColor{ transition:background-color 1.2s ease; }
-
 #bgColor::after{ content:""; position:absolute; inset:0; pointer-events:none; }
 body.version-A #bgColor::after{
-  background:linear-gradient(to bottom,
-    rgba(255,255,255,var(--veilA-top)),
-    rgba(255,255,255,var(--veilA-bottom)));
+  background:linear-gradient(to bottom, rgba(255,255,255,var(--veilA-top)), rgba(255,255,255,var(--veilA-bottom)));
 }
 body.version-B #bgColor::after,
 body.version-T #bgColor::after{
-  background:linear-gradient(to bottom,
-    rgba(0,0,0,var(--veilB-top)),
-    rgba(0,0,0,var(--veilB-bottom)));
+  background:linear-gradient(to bottom, rgba(0,0,0,var(--veilB-top)), rgba(0,0,0,var(--veilB-bottom)));
 }
 
 /* Breathing halo */
@@ -121,7 +84,6 @@ body.version-T #bgColor::after{
 }
 #bgBreath.active{ animation-play-state:running; opacity:.2; }
 @keyframes breath{ 50%{ transform:scale(1.05);} }
-
 @supports(width:100dvw){
   #bgColor,#bgBreath{ width:100dvw; height:100dvh; }
 }
@@ -129,7 +91,7 @@ body.version-T #bgColor::after{
   #bgColor,#bgBreath{ width:100vw; height:100vh; }
 }
 
-/* ========== Content (scene surface) ========== */
+/* ========== Content ========== */
 #content{ width:100%; max-width:600px; text-align:center; }
 
 /* Theme shadows */
@@ -159,12 +121,8 @@ body.version-T .symbol,body.version-T .narr{ text-shadow:var(--shadow-B); }
 @supports not (color: color-mix(in srgb, red, blue)){
   .section-tag{ background:rgba(0,0,0,.06); }
 }
-body.version-A .section-tag{
-  color:var(--txt-A); border:1px solid rgba(0,0,0,var(--tag-border-alpha-A));
-}
-body.version-B .section-tag, body.version-T .section-tag{
-  color:var(--txt-B); border:1px solid rgba(255,255,255,var(--tag-border-alpha-B));
-}
+body.version-A .section-tag{ color:var(--txt-A); border:1px solid rgba(0,0,0,var(--tag-border-alpha-A)); }
+body.version-B .section-tag, body.version-T .section-tag{ color:var(--txt-B); border:1px solid rgba(255,255,255,var(--tag-border-alpha-B)); }
 
 /* Titles & Narration */
 .title_key{
@@ -177,10 +135,7 @@ body.version-B .section-tag, body.version-T .section-tag{
   margin-bottom:var(--title-gap-bottom, 1rem);
   font-size:clamp(1.6rem, 5vw, 2.4rem);
 }
-.narr{
-  font-size:clamp(1rem, 2.2vw, 1.15rem);
-  line-height:1.8; white-space:pre-line; margin-bottom:1rem;
-}
+.narr{ font-size:clamp(1rem, 2.2vw, 1.15rem); line-height:1.8; white-space:pre-line; margin-bottom:1rem; }
 
 /* ========== Symbol Band (full-bleed) ========== */
 .symbol-bg{
@@ -217,10 +172,7 @@ body.version-T .symbol-bg::after{
 }
 
 /* Emoji */
-.symbol{
-  font-size:clamp(4rem, 20vw, 8rem);
-  line-height:1.05; white-space:nowrap; display:inline-block; padding-bottom:.08em;
-}
+.symbol{ font-size:clamp(4rem, 20vw, 8rem); line-height:1.05; white-space:nowrap; display:inline-block; padding-bottom:.08em; }
 
 /* ========== Play Button ========== */
 .playBtn{
@@ -237,10 +189,7 @@ body.version-T .symbol-bg::after{
 
 /* ========== Effects (overlay) ========== */
 .effect-container{ position:fixed; inset:0; z-index:3; pointer-events:none; }
-@keyframes sk-light-in {
-  0%{ opacity:1; background:radial-gradient(circle at center, white 0%, black 100%); }
-  100%{ opacity:0; background:radial-gradient(circle at center, white 200%, black 300%); }
-}
+@keyframes sk-light-in { 0%{ opacity:1; background:radial-gradient(circle at center, white 0%, black 100%); } 100%{ opacity:0; background:radial-gradient(circle at center, white 200%, black 300%); } }
 .light-in{ animation: sk-light-in 1.5s ease-out forwards; }
 @keyframes sk-flame-out { 0%{opacity:0;} 50%{opacity:1;} 100%{opacity:0;} }
 .flame-out, .burn-out{
@@ -251,63 +200,47 @@ body.version-T .symbol-bg::after{
 .flash{ background:#fff; animation:flash .4s ease-out; }
 
 /* ========== Debug Panel (safe-area pin; 見た目のみ) ========== */
-#debug-panel{
-  padding-left:max(10px, env(safe-area-inset-left,0px));
-  padding-right:max(10px, env(safe-area-inset-right,0px));
-  padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));
-  will-change:transform;
-}
-#debug-panel .dbg-bar{
-  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
-  padding:6px 8px; background:rgba(0,0,0,.82);
-  border-top:1px solid rgba(255,255,255,.15); backdrop-filter:blur(4px);
-}
+#debug-panel{ padding-left:max(10px, env(safe-area-inset-left,0px)); padding-right:max(10px, env(safe-area-inset-right,0px)); padding-bottom:calc(8px + env(safe-area-inset-bottom,0px)); will-change:transform; }
+#debug-panel .dbg-bar{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:6px 8px; background:rgba(0,0,0,.82); border-top:1px solid rgba(255,255,255,.15); backdrop-filter:blur(4px); }
+#debug-panel .dbg-status{ display:flex; align-items:center; gap:8px; font-size:12px; opacity:.95; }
+#debug-panel .dbg-body{ max-height:44vh; overflow:auto; padding:8px; background:rgba(0,0,0,.70); border-top:1px solid rgba(255,255,255,.15); }
 
-/* ←ここを修正: #dbg-status を厳密指定（以前は .dbg-status で一致しない可能性があった） */
-#debug-panel #dbg-status{
-  display:flex; align-items:center; gap:var(--chip-gap); flex-wrap:wrap;
-  font-size:12px; opacity:.95;
-}
-
-/* Buttons / inputs (視認性向上: focus-ring) */
-#debug-panel button,
-#debug-panel input,
-#debug-panel select{
-  font-size:16px; min-height:44px;
-}
-#debug-panel button:focus-visible,
-#debug-panel input:focus-visible,
-#debug-panel select:focus-visible{
-  outline:2px solid rgba(255,255,255,.9);
-  outline-offset:2px;
-}
-
-/* Controls row（展開時のボディ） */
-#debug-panel .dbg-body{
-  max-height:44vh; overflow:auto;
-  padding:8px; background:rgba(0,0,0,.70);
-  border-top:1px solid rgba(255,255,255,.15);
-}
-
-/* Note / rows / buttons */
-#debug-panel .dbg-row{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0; }
-#debug-panel .dbg-note{
-  width:100%; padding:6px 8px;
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.18);
-  border-radius:6px; font-size:12px; line-height:1.5; white-space:pre-wrap; margin:6px 0;
-}
-#debug-panel .dbg-buttons>button{
+/* QuickBar buttons/chip（閉バーのみ） */
+#debug-panel .qb-btn{
   appearance:none; border:1px solid rgba(255,255,255,.35);
   background:rgba(255,255,255,.08); color:#fff;
-  padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px; line-height:1;
+  width:40px; height:40px; min-height:40px; border-radius:10px;
+  font-size:18px; line-height:1; cursor:pointer;
 }
-#debug-panel .dbg-buttons>button:hover{ background:rgba(255,255,255,.15); }
-#debug-panel .dbg-buttons>button.accent-cyan{
-  border-color:rgba(0,200,255,.55); background:rgba(0,200,255,.15);
+#debug-panel .qb-chip{
+  display:inline-flex; align-items:center; gap:.5em;
+  padding:.28rem .6rem; border-radius:999px; font-weight:700; font-size:12px; line-height:1;
+  border:1px solid transparent; color:#fff; margin-left:4px;
 }
-#debug-panel .dbg-buttons>button.accent-red{
-  border-color:rgba(255,120,120,.55); background:rgba(255,120,120,.15);
+#debug-panel .qb-chip[hidden]{ display:none; }
+#debug-panel .qb-chip.stopping{ background:#b45309; border-color:#92400e; }
+#debug-panel .qb-chip.stopped{ background:#15803d; border-color:#065f46; }
+
+/* Expanded badges（speaking/paused/pending 等） */
+#debug-panel .dbg-badge{
+  display:inline-flex; align-items:center; gap:.5em;
+  padding:.28rem .6rem; border-radius:999px; font-weight:700; font-size:12px; line-height:1;
+  border:1px solid transparent; color:#fff; background:#3f3f46; opacity:.75;
+}
+#debug-panel .dbg-badge.on{ opacity:1; }
+#debug-panel .dbg-badge.speaking{ background:#15803d; border-color:#065f46; }
+#debug-panel .dbg-badge.paused  { background:#b45309; border-color:#92400e; }
+#debug-panel .dbg-badge.pending { background:#1d4ed8; border-color:#1e40af; }
+
+/* Gentle pulse for expanded status only */
+#debug-panel .dbg-badge.pulse.on{ animation:dbgPulse 1.2s ease-in-out infinite; }
+@keyframes dbgPulse{
+  0%{   box-shadow:0 0 0 0 rgba(255,255,255,.25); }
+  70%{  box-shadow:0 0 0 6px rgba(255,255,255,0); }
+  100%{ box-shadow:0 0 0 0 rgba(255,255,255,0); }
+}
+@media (prefers-reduced-motion:reduce){
+  #debug-panel .dbg-badge.pulse.on{ animation:none; }
 }
 
 /* Goto field */
@@ -321,104 +254,10 @@ body.version-T .symbol-bg::after{
 #debug-panel.collapsed{ pointer-events:none; }
 #debug-panel.collapsed .dbg-bar{ pointer-events:auto; }
 
-/* ====== State Chips / Badges ====== */
-/* debug_panel.js 注入CSSよりも詳細度を上げて上書きするため .dbg-bar を挟む */
-#debug-panel .dbg-bar .dbg-chip,
-#debug-panel .dbg-bar .dbg-badge{
-  display:inline-flex; align-items:center; gap:.5em;
-  padding:var(--chip-pad-y) var(--chip-pad-x);
-  border-radius:var(--chip-radius);
-  font-weight:var(--chip-weight); font-size:12px; line-height:1;
-  letter-spacing:.02em;
-  border:1px solid transparent;
-  color:var(--chip-fg);
-  text-shadow:none; white-space:nowrap;
-  box-shadow:var(--chip-shadow);
-}
-
-/* speaking / paused / pending */
-#debug-panel .dbg-bar .dbg-chip.speaking,
-#debug-panel .dbg-bar .dbg-badge.speaking{
-  background:var(--chip-speaking-bg); border-color:var(--chip-speaking-bd); color:var(--chip-speaking-fg);
-}
-#debug-panel .dbg-bar .dbg-chip.paused,
-#debug-panel .dbg-bar .dbg-badge.paused{
-  background:var(--chip-paused-bg); border-color:var(--chip-paused-bd); color:var(--chip-paused-fg);
-}
-#debug-panel .dbg-bar .dbg-chip.pending,
-#debug-panel .dbg-bar .dbg-badge.pending{
-  background:var(--chip-pending-bg); border-color:var(--chip-pending-bd); color:var(--chip-pending-fg);
-}
-
-/* 状態ON/OFF 旧式クラスとの互換（.on/.off） */
-#debug-panel .dbg-bar .dbg-badge.on{ filter:brightness(1.0) saturate(1.0); }
-#debug-panel .dbg-bar .dbg-badge.off{
-  background:#fde7e9; color:#a61b2b; border-color:#f4c2c7;
-}
-
-/* 小さな丸アイコン（視覚的な“信号”） */
-#debug-panel .dbg-bar .dbg-chip::before,
-#debug-panel .dbg-bar .dbg-badge::before{
-  content:""; width:.5em; height:.5em; border-radius:50%; background:currentColor; opacity:.9;
-  box-shadow:0 0 0 1px rgba(0,0,0,.15) inset;
-}
-#debug-panel .dbg-bar .dbg-chip.paused::before,
-#debug-panel .dbg-bar .dbg-badge.paused::before{ opacity:.9; }
-#debug-panel .dbg-bar .dbg-chip.pending::before,
-#debug-panel .dbg-bar .dbg-badge.pending::before{ opacity:.9; }
-
-/* 脈動（config: motion='auto' 時に .pulse が付与される前提） */
-@keyframes dbgPulse{ 0%{ box-shadow:0 0 0 0 rgba(19,115,51,.45);} 70%{ box-shadow:0 0 0 6px rgba(19,115,51,0);} 100%{ box-shadow:0 0 0 0 rgba(19,115,51,0);} }
-#debug-panel .dbg-bar .dbg-badge.pulse.on{ animation:dbgPulse 1.2s ease-in-out infinite; }
-
-/* 高コントラスト環境での強調 */
-@media (prefers-contrast: more){
-  #debug-panel .dbg-bar .dbg-chip,
-  #debug-panel .dbg-bar .dbg-badge{
-    box-shadow:0 0 0 2px rgba(0,0,0,.35) inset;
-  }
-  #debug-panel .dbg-bar .dbg-badge.speaking{ background:#166534; border-color:#065f46; }
-  #debug-panel .dbg-bar .dbg-badge.paused{   background:#92400e; border-color:#7c2d12; }
-  #debug-panel .dbg-bar .dbg-badge.pending{  background:#1e40af; border-color:#1e3a8a; }
-}
-
-/* 動きを苦手とする設定ではアニメ停止 */
-@media (prefers-reduced-motion: reduce){
-  #bgBreath{ animation:none; }
-  #debug-panel .dbg-bar .dbg-badge.pulse.on{ animation:none; }
-}
-
 /* ========== Optional FX Canvas ========== */
 #bgFX{ position:fixed; inset:0; z-index:0; pointer-events:none; mix-blend-mode:screen; opacity:.9; }
 @media (prefers-reduced-motion:reduce){ #bgFX{ display:none; } }
 body.version-B #bgFX, body.version-T #bgFX{ mix-blend-mode:lighten; opacity:.7; }
 
-/* ========== Mobile-friendly input sizing (再掲) ========== */
+/* ========== Mobile-friendly input sizing ========== */
 input,select,textarea,button{ font-size:16px; min-height:44px; }
-
-/* ===== QuickBar (Play/Stop + ACK) ===== */
-#debug-panel .dbg-bar .dbg-qb{
-  display:flex; align-items:center; gap:8px; margin-left:8px;
-}
-#debug-panel .dbg-bar .dbg-qb .qb-btn{
-  appearance:none; border:1px solid rgba(255,255,255,.35);
-  background:rgba(255,255,255,.08); color:#fff; border-radius:6px;
-  cursor:pointer; font-size:14px; line-height:1;
-  width:40px; height:34px; min-height:34px;
-}
-#debug-panel .dbg-bar .dbg-qb .qb-btn:focus-visible{
-  outline:2px solid rgba(255,255,255,.9); outline-offset:2px;
-}
-#debug-panel .dbg-bar .dbg-qb .qb-play{
-  border-color:rgba(0,200,255,.55); background:rgba(0,200,255,.18);
-}
-#debug-panel .dbg-bar .dbg-qb .qb-stop{
-  border-color:rgba(255,120,120,.55); background:rgba(255,120,120,.18);
-}
-#debug-panel .dbg-bar .dbg-qb #dbg-ack-chip{
-  margin-left:6px;
-}
-/* motion=auto で pending時に pulse+on が付く（reduced-motion では停止） */
-@media (prefers-reduced-motion: reduce){
-  #debug-panel .dbg-bar .dbg-qb #dbg-ack-chip.pulse.on{ animation:none; }
-}
