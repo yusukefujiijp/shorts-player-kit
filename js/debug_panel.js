@@ -37,6 +37,11 @@ Notes (delta):
 	var VOICE_DEF = Object.assign({ tag: null, titleKey: null, title: null, narr: null }, (VOICE_IN.defaults || {}));
 	var VOICE_FILTER = { jaOnly: (VOICE_IN.filter && typeof VOICE_IN.filter.jaOnly === 'boolean') ? !!VOICE_IN.filter.jaOnly : true };
 
+	// QuickBar (play/stop/ack) config
+	var QB = (CFG_IN.quickbar && typeof CFG_IN.quickbar === 'object') ? CFG_IN.quickbar : { enabled: false };
+	QB.enabled = !!QB.enabled;
+	QB.items = Object.assign({ play: true, stop: true, stopAck: true }, (QB.items || {}));
+
 	// === Badge motion config (auto | static | off) ===
 	var BADGES = (CFG_IN.badges && typeof CFG_IN.badges === 'object') ? CFG_IN.badges : {};
 	var BADGE_MOTION = (BADGES.motion === 'static' || BADGES.motion === 'off') ? BADGES.motion : 'auto';
@@ -145,9 +150,81 @@ Notes (delta):
 		body = $('#dbg-body'),
 		tgl = $('#dbg-toggle'),
 		arrow = $('#dbg-arrow');
+
+	// QuickBar host (右側に常設)
+	var qbHost = null;
+	if (QB.enabled && bar) {
+		qbHost = document.createElement('div');
+		qbHost.id = 'dbg-qb';
+		qbHost.className = 'dbg-qb';
+		bar.appendChild(qbHost);
+	}
+
 	var statusEl = $('#dbg-status'),
 		gotoInp = $('#dbg-goto');
 	var ackEl = $('#dbg-ack');
+
+	// ---------- QuickBar UI ----------
+	function buildQuickBar() {
+		if (!QB.enabled || !qbHost) return;
+		qbHost.innerHTML = '';
+
+		if (QB.items.play) {
+			var b = document.createElement('button');
+			b.textContent = '▶︎';
+			b.setAttribute('data-act', 'qbplay');
+			b.className = 'qb-btn qb-play';
+			styleBtn(b);
+			qbHost.appendChild(b);
+		}
+		if (QB.items.stop) {
+			var b2 = document.createElement('button');
+			b2.textContent = '■';
+			b2.setAttribute('data-act', 'qbstop');
+			b2.className = 'qb-btn qb-stop';
+			styleBtn(b2);
+			qbHost.appendChild(b2);
+		}
+		if (QB.items.stopAck) {
+			var s = document.createElement('span');
+			s.className = 'dbg-badge qb-ack';
+			s.textContent = 'idle';
+			qbHost.appendChild(s);
+		}
+	}
+	buildQuickBar();
+
+	function qbAckPending() {
+		if (!QB.enabled || !QB.items.stopAck || !qbHost) return;
+		var el = qbHost.querySelector('.qb-ack');
+		if (!el) return;
+		el.classList.remove('on');
+		el.classList.add('off');
+		el.textContent = 'Stopping…';
+	}
+
+	function qbAckStopped(latencyMs) {
+		if (!QB.enabled || !QB.items.stopAck || !qbHost) return;
+		var el = qbHost.querySelector('.qb-ack');
+		if (!el) return;
+		el.classList.remove('off');
+		el.classList.add('on');
+		el.textContent = 'Stopped';
+		// 簡易的に数秒でidleへ戻す
+		clearTimeout(qbAckStopped._t);
+		qbAckStopped._t = setTimeout(function() {
+			el.classList.remove('on', 'off');
+			el.textContent = 'idle';
+		}, 1800);
+	}
+
+	function qbAckClear() {
+		if (!QB.enabled || !QB.items.stopAck || !qbHost) return;
+		var el = qbHost.querySelector('.qb-ack');
+		if (!el) return;
+		el.classList.remove('on', 'off');
+		el.textContent = 'idle';
+	}
 
 	// 開閉
 	(function initUI() {
@@ -273,6 +350,9 @@ Notes (delta):
 		stopAck.confirmed = false;
 		stopAck.ts = (ev && ev.detail && ev.detail.ts) ? ev.detail.ts : Date.now();
 		showAckPending();
+
+		// player:stop-ack の末尾に
+		qbAckPending();
 	});
 	window.addEventListener('player:stop-confirm', function(ev) {
 		stopAck.pending = false;
@@ -280,6 +360,9 @@ Notes (delta):
 		stopAck.latencyMs = (ev && ev.detail && ev.detail.latencyMs) | 0;
 		stopAck.context = (ev && ev.detail && ev.detail.context) || '';
 		showAckStopped();
+
+		// player:stop-confirm の末尾に
+		qbAckStopped(stopAck.latencyMs);
 	});
 
 	/* ============================ Actions ========================= */
@@ -306,6 +389,19 @@ Notes (delta):
 		var act = t.getAttribute('data-act') || '';
 		var P = (window.__player || {});
 		switch (act) {
+
+			case 'qbplay':
+				clearAck();
+				qbAckClear();
+				try { speechSynthesis.cancel(); } catch (_) {}
+				if (P.play) P.play();
+				break;
+
+			case 'qbstop':
+				// ページ末停止（ACKはイベントで更新）
+				if (P.stop) try { P.stop(); } catch (_) {}
+				break;
+
 			case 'prev':
 				clearAck();
 				if (P.prev) P.prev();

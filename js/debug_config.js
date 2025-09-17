@@ -1,14 +1,15 @@
 /*!
-Project: shorts-player-kit
-File:    js/debug_config.js
-Role:    Debug Panel Config (機能露出とUIバッジの方針を一元管理)
+Project:  shorts-player-kit
+File:     js/debug_config.js
+Role:     Debug Panel Config (機能露出とUIバッジ/クイックバー方針を一元管理)
 Notes:
   - sections/buttons/locks は UI 構成・露出ゲート。
   - rolesRate は perRoleAbs（0.5〜2.0, default=1.4）。
   - badges.motion は speaking/paused/pending バッジのモーション方針:
-      'auto'   : 既定（環境に応じ可動 / 将来の動き抑制にも整合）
+      'auto'   : 既定（環境に応じて可動）
       'static' : 静止表示（読みやすさ重視）
       'off'    : 非表示（計測や録画時など）
+  - quickbar は「閉じた状態でも最優先だけ操作・確認」するエリア。
 */
 
 (function(){
@@ -46,8 +47,26 @@ Notes:
       stop:       true,
       restart:    true,
       goto:       true,
-      hardreload: true,  // ⟲ Hard Reload をUIに出すか
-      hardstop:   true   // ⛔ Hard Stop（強制停止ラボ機能）をUIに出すか
+      hardreload: true,   // ⟲ Hard Reload をUIに出すか
+      hardstop:   false   // ⛔ Hard Stop（強制停止ラボ機能）—現在は非表示（保持のみ）
+    },
+
+    /* QuickBar（パネル折りたたみ時の最小UI） */
+    quickbar: {
+      enabled: true,        // QuickBar を使うか
+      side: 'right',        // 'left' | 'right'
+      items: {
+        play:   true,       // ▶︎ Play（別ボタン）
+        stop:   true,       // ■ Stop（別ボタン）
+        stopAck:true        // Stop ACK（即時/確定を小バッジで表示）
+      },
+      style: {
+        // iOS推奨タップターゲット 44pt を既定（px相当; 実表示は CSS 側で調整）
+        sizePx: 44,
+        gapPx:  10,
+        labels: false,      // ラベル文字の表示（false でアイコンのみ）
+        contrast: 'auto'    // 'auto' | 'light' | 'dark'
+      }
     },
 
     /* UI上の編集ロック（必要に応じて制限） */

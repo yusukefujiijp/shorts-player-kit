@@ -3,8 +3,15 @@ Project: shorts-player-kit
 File:    ./style.css
 Role:    Visual-only (veils/band/typography/effects + Debug Panel polish)
 Depends: body.version-(A|B|T), --symbol-bg-color (JS supplies)
+
+Refactor notes:
+- #dbg-status を正しくスタイルできるようセレクタを `.dbg-status` → `#dbg-status` に整理
+- Debugバッジ（speaking/paused/pending）の配色・コントラストを強化
+- prefers-reduced-motion / prefers-contrast を尊重
+- debug_panel.js が注入する最小CSSよりも高い詳細度で上書き（衝突回避）
 */
 
+/* ========== Variables ========== */
 :root{
   /* Text & shadow (A=light / B=dark) */
   --txt-A:#2c2c2c; --bg-A:#f9f9f7; --shadow-A:1px 1px 3px rgba(0,0,0,.25);
@@ -255,9 +262,11 @@ body.version-T .symbol-bg::after{
   padding:6px 8px; background:rgba(0,0,0,.82);
   border-top:1px solid rgba(255,255,255,.15); backdrop-filter:blur(4px);
 }
-#debug-panel .dbg-status{ 
+
+/* ←ここを修正: #dbg-status を厳密指定（以前は .dbg-status で一致しない可能性があった） */
+#debug-panel #dbg-status{
   display:flex; align-items:center; gap:var(--chip-gap); flex-wrap:wrap;
-  font-size:12px; opacity:.95; 
+  font-size:12px; opacity:.95;
 }
 
 /* Buttons / inputs (視認性向上: focus-ring) */
@@ -273,7 +282,7 @@ body.version-T .symbol-bg::after{
   outline-offset:2px;
 }
 
-/* Controls row */
+/* Controls row（展開時のボディ） */
 #debug-panel .dbg-body{
   max-height:44vh; overflow:auto;
   padding:8px; background:rgba(0,0,0,.70);
@@ -312,10 +321,10 @@ body.version-T .symbol-bg::after{
 #debug-panel.collapsed{ pointer-events:none; }
 #debug-panel.collapsed .dbg-bar{ pointer-events:auto; }
 
-/* ====== State Chips (new) ====== */
-/* 互換: .dbg-chip / .dbg-badge の両方に適用 */
-#debug-panel .dbg-chip, 
-#debug-panel .dbg-badge{
+/* ====== State Chips / Badges ====== */
+/* debug_panel.js 注入CSSよりも詳細度を上げて上書きするため .dbg-bar を挟む */
+#debug-panel .dbg-bar .dbg-chip,
+#debug-panel .dbg-bar .dbg-badge{
   display:inline-flex; align-items:center; gap:.5em;
   padding:var(--chip-pad-y) var(--chip-pad-x);
   border-radius:var(--chip-radius);
@@ -328,44 +337,55 @@ body.version-T .symbol-bg::after{
 }
 
 /* speaking / paused / pending */
-#debug-panel .dbg-chip.speaking, 
-#debug-panel .dbg-badge.speaking{
+#debug-panel .dbg-bar .dbg-chip.speaking,
+#debug-panel .dbg-bar .dbg-badge.speaking{
   background:var(--chip-speaking-bg); border-color:var(--chip-speaking-bd); color:var(--chip-speaking-fg);
 }
-#debug-panel .dbg-chip.paused, 
-#debug-panel .dbg-badge.paused{
+#debug-panel .dbg-bar .dbg-chip.paused,
+#debug-panel .dbg-bar .dbg-badge.paused{
   background:var(--chip-paused-bg); border-color:var(--chip-paused-bd); color:var(--chip-paused-fg);
 }
-#debug-panel .dbg-chip.pending, 
-#debug-panel .dbg-badge.pending{
+#debug-panel .dbg-bar .dbg-chip.pending,
+#debug-panel .dbg-bar .dbg-badge.pending{
   background:var(--chip-pending-bg); border-color:var(--chip-pending-bd); color:var(--chip-pending-fg);
 }
 
-/* 小さな丸アイコン（視覚的な“信号”） */
-#debug-panel .dbg-chip::before,
-#debug-panel .dbg-badge::before{
-  content:""; width:.5em; height:.5em; border-radius:50%; background:currentColor; opacity:.9;
+/* 状態ON/OFF 旧式クラスとの互換（.on/.off） */
+#debug-panel .dbg-bar .dbg-badge.on{ filter:brightness(1.0) saturate(1.0); }
+#debug-panel .dbg-bar .dbg-badge.off{
+  background:#fde7e9; color:#a61b2b; border-color:#f4c2c7;
 }
-#debug-panel .dbg-chip.paused::before,
-#debug-panel .dbg-badge.paused::before{ opacity:.85; }
-#debug-panel .dbg-chip.pending::before,
-#debug-panel .dbg-badge.pending::before{ opacity:.85; }
+
+/* 小さな丸アイコン（視覚的な“信号”） */
+#debug-panel .dbg-bar .dbg-chip::before,
+#debug-panel .dbg-bar .dbg-badge::before{
+  content:""; width:.5em; height:.5em; border-radius:50%; background:currentColor; opacity:.9;
+  box-shadow:0 0 0 1px rgba(0,0,0,.15) inset;
+}
+#debug-panel .dbg-bar .dbg-chip.paused::before,
+#debug-panel .dbg-bar .dbg-badge.paused::before{ opacity:.9; }
+#debug-panel .dbg-bar .dbg-chip.pending::before,
+#debug-panel .dbg-bar .dbg-badge.pending::before{ opacity:.9; }
+
+/* 脈動（config: motion='auto' 時に .pulse が付与される前提） */
+@keyframes dbgPulse{ 0%{ box-shadow:0 0 0 0 rgba(19,115,51,.45);} 70%{ box-shadow:0 0 0 6px rgba(19,115,51,0);} 100%{ box-shadow:0 0 0 0 rgba(19,115,51,0);} }
+#debug-panel .dbg-bar .dbg-badge.pulse.on{ animation:dbgPulse 1.2s ease-in-out infinite; }
 
 /* 高コントラスト環境での強調 */
 @media (prefers-contrast: more){
-  #debug-panel .dbg-chip,
-  #debug-panel .dbg-badge{
+  #debug-panel .dbg-bar .dbg-chip,
+  #debug-panel .dbg-bar .dbg-badge{
     box-shadow:0 0 0 2px rgba(0,0,0,.35) inset;
   }
-  #debug-panel .dbg-chip.speaking, #debug-panel .dbg-badge.speaking{
-    background:#166534; border-color:#065f46; /* deeper green */
-  }
-  #debug-panel .dbg-chip.paused, #debug-panel .dbg-badge.paused{
-    background:#92400e; border-color:#7c2d12; /* deeper amber/brown */
-  }
-  #debug-panel .dbg-chip.pending, #debug-panel .dbg-badge.pending{
-    background:#1e40af; border-color:#1e3a8a; /* deeper blue */
-  }
+  #debug-panel .dbg-bar .dbg-badge.speaking{ background:#166534; border-color:#065f46; }
+  #debug-panel .dbg-bar .dbg-badge.paused{   background:#92400e; border-color:#7c2d12; }
+  #debug-panel .dbg-bar .dbg-badge.pending{  background:#1e40af; border-color:#1e3a8a; }
+}
+
+/* 動きを苦手とする設定ではアニメ停止 */
+@media (prefers-reduced-motion: reduce){
+  #bgBreath{ animation:none; }
+  #debug-panel .dbg-bar .dbg-badge.pulse.on{ animation:none; }
 }
 
 /* ========== Optional FX Canvas ========== */
