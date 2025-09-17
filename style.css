@@ -395,3 +395,30 @@ body.version-B #bgFX, body.version-T #bgFX{ mix-blend-mode:lighten; opacity:.7; 
 
 /* ========== Mobile-friendly input sizing (再掲) ========== */
 input,select,textarea,button{ font-size:16px; min-height:44px; }
+
+/* ===== QuickBar (Play/Stop + ACK) ===== */
+#debug-panel .dbg-bar .dbg-qb{
+  display:flex; align-items:center; gap:8px; margin-left:8px;
+}
+#debug-panel .dbg-bar .dbg-qb .qb-btn{
+  appearance:none; border:1px solid rgba(255,255,255,.35);
+  background:rgba(255,255,255,.08); color:#fff; border-radius:6px;
+  cursor:pointer; font-size:14px; line-height:1;
+  width:40px; height:34px; min-height:34px;
+}
+#debug-panel .dbg-bar .dbg-qb .qb-btn:focus-visible{
+  outline:2px solid rgba(255,255,255,.9); outline-offset:2px;
+}
+#debug-panel .dbg-bar .dbg-qb .qb-play{
+  border-color:rgba(0,200,255,.55); background:rgba(0,200,255,.18);
+}
+#debug-panel .dbg-bar .dbg-qb .qb-stop{
+  border-color:rgba(255,120,120,.55); background:rgba(255,120,120,.18);
+}
+#debug-panel .dbg-bar .dbg-qb #dbg-ack-chip{
+  margin-left:6px;
+}
+/* motion=auto で pending時に pulse+on が付く（reduced-motion では停止） */
+@media (prefers-reduced-motion: reduce){
+  #debug-panel .dbg-bar .dbg-qb #dbg-ack-chip.pulse.on{ animation:none; }
+}

@@ -37,11 +37,29 @@ Notes (delta):
 	var VOICE_DEF = Object.assign({ tag: null, titleKey: null, title: null, narr: null }, (VOICE_IN.defaults || {}));
 	var VOICE_FILTER = { jaOnly: (VOICE_IN.filter && typeof VOICE_IN.filter.jaOnly === 'boolean') ? !!VOICE_IN.filter.jaOnly : true };
 
-	// QuickBar (play/stop/ack) config
-	var QB = (CFG_IN.quickbar && typeof CFG_IN.quickbar === 'object') ? CFG_IN.quickbar : { enabled: false };
-	QB.enabled = !!QB.enabled;
-	QB.items = Object.assign({ play: true, stop: true, stopAck: true }, (QB.items || {}));
+	// QuickBar (play/stop/ack) config — derived, non-mutating (no writes to frozen cfg)
+	var QB_IN = (CFG_IN && typeof CFG_IN.quickbar === 'object') ? CFG_IN.quickbar : null;
 
+	// 派生ブール（凍結オブジェクトへは一切代入しない）
+	var QB_ENABLED = !!(QB_IN && QB_IN.enabled);
+
+	// 派生アイテム（既定にユーザー設定を上書き合成）※第一引数に空オブジェクトで“非破壊”マージ
+	var QB_ITEMS = (function() {
+		var defaults = { play: true, stop: true, stopAck: true };
+		var src = (QB_IN && typeof QB_IN.items === 'object') ? QB_IN.items : null;
+		try {
+			return Object.assign({}, defaults, src || {});
+		} catch (_) {
+			// 万一 Object.assign が怪しい環境でも既定でフォールバック
+			var o = { play: true, stop: true, stopAck: true };
+			if (src) { try { for (var k in src)
+						if (Object.prototype.hasOwnProperty.call(src, k)) o[k] = src[k]; } catch (__) {} }
+			return o;
+		}
+	})();
+
+	// 以降のコードで従来どおり QB.enabled / QB.items を参照できるよう“読み取り用オブジェクト”を提供
+	var QB = { enabled: QB_ENABLED, items: QB_ITEMS };
 	// === Badge motion config (auto | static | off) ===
 	var BADGES = (CFG_IN.badges && typeof CFG_IN.badges === 'object') ? CFG_IN.badges : {};
 	var BADGE_MOTION = (BADGES.motion === 'static' || BADGES.motion === 'off') ? BADGES.motion : 'auto';
@@ -144,6 +162,24 @@ Notes (delta):
 		(SECTIONS.voices ? ('<div id="dbg-voices" class="sec"></div>') : '') +
 		(SECTIONS.status ? ('<div id="dbg-statusbox" class="sec"></div>') : '') +
 		'</div>';
+
+	// [QB] QuickBar (Play/Stop + ACK) — 折り畳み時でも操作可
+	(function initQuickBar() {
+		// CFG_IN.quickbar === false なら非表示（未指定なら表示）
+		if (CFG_IN.quickbar === false) return;
+		var bar = host.querySelector('.dbg-bar');
+		if (!bar) return;
+		var status = host.querySelector('#dbg-status');
+
+		var qb = document.createElement('div');
+		qb.className = 'dbg-qb';
+		qb.innerHTML = '' +
+			'<button data-act="qb-play" class="qb-btn qb-play" title="Play">▶︎</button>' +
+			'<button data-act="qb-stop" class="qb-btn qb-stop" title="Stop">■</button>' +
+			'<span id="dbg-ack-chip" class="dbg-badge ack paused">ACK idle</span>';
+		// ステータスの直前（左側の“特等席”）に差し込む
+		bar.insertBefore(qb, status || null);
+	})();
 
 	function $(s) { return host.querySelector(s); }
 	var bar = $('.dbg-bar'),
@@ -389,6 +425,58 @@ Notes (delta):
 		var act = t.getAttribute('data-act') || '';
 		var P = (window.__player || {});
 		switch (act) {
+
+			// ▼ クリックswitchに追加
+			case 'qb-play':
+				clearAck();
+				try { speechSynthesis.cancel(); } catch (_) {}
+				if (P.play) P.play();
+				break;
+			case 'qb-stop':
+				try { if (P.stop) P.stop(); } catch (_) {}
+				break;
+
+				// ▼ ファイル内のどこでも良いが、showAck* より上に置くと見通し良
+				function setAckChip(state, latency) {
+					var c = document.getElementById('dbg-ack-chip');
+					if (!c) return;
+					c.className = 'dbg-badge ack'; // 一旦リセット
+					if (state === 'pending') {
+						c.classList.add('pending', 'pulse', 'on');
+						c.textContent = 'ACK…';
+					} else if (state === 'ok') {
+						c.classList.add('speaking'); // 成功＝緑系
+						c.textContent = 'ACK OK' + (typeof latency === 'number' ? ' (' + (latency | 0) + 'ms)' : '');
+					} else {
+						c.classList.add('paused'); // アイドル＝アンバー
+						c.textContent = 'ACK idle';
+					}
+				}
+
+				// ▼ 既存の表示関数の最後に呼び出しを追加
+				function showAckPending() {
+					/* 既存の中身そのまま */
+					if (!ackEl) return;
+					ackEl.style.display = 'block';
+					ackEl.innerHTML = 'Stop: <span class="dbg-badge off">Stopping…</span>';
+					setAckChip('pending');
+				}
+
+				function showAckStopped() {
+					/* 既存の中身そのまま */
+					if (!ackEl) return;
+					ackEl.style.display = 'block';
+					ackEl.innerHTML = 'Stop: <span class="dbg-badge on">Stopped</span> <span style="opacity:.7">' + (stopAck.latencyMs | 0) + 'ms</span>' + (stopAck.context ? ' <span style="opacity:.7">[' + stopAck.context + ']</span>' : '');
+					setAckChip('ok', stopAck.latencyMs);
+				}
+
+				function clearAck() {
+					/* 既存の中身そのまま */
+					if (!ackEl) return;
+					ackEl.style.display = 'none';
+					ackEl.innerHTML = '';
+					setAckChip('idle');
+				}
 
 			case 'qbplay':
 				clearAck();

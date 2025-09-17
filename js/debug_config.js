@@ -36,7 +36,9 @@ Notes:
       goto:     true,
       ttsFlags: true,
       voices:   true,
-      baseRate: false   // ベースRate行は非表示（役割別のみを使用）
+      baseRate: false,   // ベースRate行は非表示（役割別のみを使用）
+			
+			quickbar: true // ← false にするとQuickBarを非表示
     },
 
     /* 表示する操作ボタン（ここで機能露出を一元管理） */
