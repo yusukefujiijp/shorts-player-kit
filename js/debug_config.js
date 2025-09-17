@@ -1,7 +1,11 @@
 /*!
 Project: shorts-player-kit
 File:    js/debug_config.js
-Role:    Debug Panel Config (機能露出・UI方針を一元管理)
+Role:    Debug Panel Config (機能露出とUIバッジの方針を一元管理)
+Notes:
+  - QuickBar は 2 段固定。Row1: Debug/Play/Stop/ACK, Row2: status。
+  - 展開パネルに speaking/paused/pending（ラボ用パルス）を表示。
+  - badges.motion: 'auto' | 'static' | 'off'
 */
 
 (function(){
@@ -31,26 +35,19 @@ Role:    Debug Panel Config (機能露出・UI方針を一元管理)
       baseRate: false
     },
 
-    /* Quick Bar（閉状態の黒バー）の方針 */
-    quickbar: {
-      enabled: true,
-      mode: 'twoRows',                 // ★ 常時2段固定
-      items: { play:true, stop:true, ack:true } // Row1: Play/Stop/ACK を表示
-    },
-
-    /* 展開パネル：表示する操作ボタン（Play/StopはQuickBarへ集約） */
+    /* 表示する操作ボタン（展開パネル側） */
     buttons: {
       prev:       true,
       next:       true,
-      play:       false,   // ★ 重複を避けるため非表示
-      stop:       false,   // ★ 重複を避けるため非表示
+      play:       false, // QuickBar 側に集約
+      stop:       false, // QuickBar 側に集約
       restart:    true,
       goto:       true,
       hardreload: true,
       hardstop:   false
     },
 
-    /* UI上の編集ロック */
+    /* UI上の編集ロック（必要に応じて制限） */
     locks: {
       allowTTSFlagEdit: true,
       allowVoiceSelect: true
@@ -84,8 +81,17 @@ Role:    Debug Panel Config (機能露出・UI方針を一元管理)
       filter: { jaOnly: true }
     },
 
-    /* バッジモーション（展開パネルの speaking/paused/pending に使用） */
-    badges: { motion: 'auto' } // 'auto' | 'static' | 'off'
+    /* QuickBar 方針 */
+    quickbar: {
+      enabled: true,
+      mode: 'twoRows',
+      items: { play:true, stop:true, ack:true }
+    },
+
+    /* ステータス・バッジの方針（展開パネルのラボ用） */
+    badges: {
+      motion: 'auto' // 'auto' | 'static' | 'off'
+    }
   };
 
   window.__dbgConfig = deepFreeze(cfg);
