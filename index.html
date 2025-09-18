@@ -98,7 +98,8 @@ NS-Core: Propose / Justify / Min-Execute / Verify / Record
 		}
 
 		/* UIガード：下部固定UIの可視・可触性を確保
-       NOTE: #debug-panel に position は与えない（JS が fixed/bottom:0 を付与） */
+     NOTE: #debug-panel の位置は **style.css 側**で fixed/bottom:0 を付与。
+           ここでは safe-area の pad だけを与える。 */
 		#debug-panel {
 			padding-bottom: var(--sa-bottom);
 		}
@@ -160,6 +161,7 @@ NS-Core: Propose / Justify / Min-Execute / Verify / Record
 			} catch (e) {}
 		})();
 	</script>
+
 	<!-- === [SK-BLOCK:SAFE-AREA-AI-NE-002 end] === -->
 
 	<!-- Load order (all JS under ./js/) -->
