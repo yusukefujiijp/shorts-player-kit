@@ -3,11 +3,10 @@ Project: shorts-player-kit
 File:    js/debug_config.js
 Role:    Debug Panel Config (機能露出とUIバッジの方針を一元管理)
 Notes:
-  - QuickBar は 2 段固定。Row1: Debug/Play/Stop/ACK, Row2: status。
-  - 展開パネルに speaking/paused/pending（ラボ用パルス）を表示。
+  - QuickBar は 2 段固定。Row1: Debug / Play / Stop / Next / ACK, Row2: status。
+  - 展開パネルは speaking/paused/pending（実験用パルス）を維持。
   - badges.motion: 'auto' | 'static' | 'off'
 */
-
 (function(){
   'use strict';
 
@@ -38,9 +37,9 @@ Notes:
     /* 表示する操作ボタン（展開パネル側） */
     buttons: {
       prev:       true,
-      next:       true,
-      play:       false, // QuickBar 側に集約
-      stop:       false, // QuickBar 側に集約
+      next:       true,   // QuickBarにも next を昇格するが、展開側にも残す
+      play:       false,  // QuickBar 側に集約
+      stop:       false,  // QuickBar 側に集約
       restart:    true,
       goto:       true,
       hardreload: true,
@@ -65,7 +64,6 @@ Notes:
 
     /* 既定ボイスと候補ヒント、フィルタ（JAのみに絞る） */
     voice: {
-      // 安定ID: voiceURI > "lang|name" > name
       defaults: {
         tag:      'ja-JP|Kyoko',
         titleKey: 'ja-JP|Kyoko',
@@ -85,7 +83,7 @@ Notes:
     quickbar: {
       enabled: true,
       mode: 'twoRows',
-      items: { play:true, stop:true, ack:true }
+      items: { play:true, stop:true, next:true, ack:true }
     },
 
     /* ステータス・バッジの方針（展開パネルのラボ用） */
