@@ -55,9 +55,18 @@ Notes (delta):
   function applyReadableTextColor(base, el){ try{ const m=/^#?([0-9a-f]{6})$/i.exec(String(base||'').trim()); if(!m) return; const h=m[1], r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16); const Y=0.299*r+0.587*g+0.114*b; (el||document.getElementById('content')||document.body).style.color=(Y<140)?'#fff':'#111'; } catch(_){} }
 
   /* ========================= Scene Surface ===================== */
-  function ensureSceneSurface(){ ensureBgLayer(); let root=document.getElementById('content'); if(!root){ root=document.createElement('div'); root.id='content'; root.style.cssText='position:relative;z-index:10;width:100%;text-align:center;'; document.body.appendChild(root);} root.innerHTML=''; return root; }
+  function ensureSceneSurface(){ ensureBgLayer(); let root=document.getElementById('content'); if(!root){ root=document.createElement('div'); root.id='content'; document.body.appendChild(root);} root.innerHTML=''; return root; }
   function createSceneShell(){ const el=document.createElement('div'); el.className='scene'; return el; }
-  function setTextInScene(sceneEl, selector, text){ let el=sceneEl.querySelector(selector); if(!el){ el=document.createElement('div'); el.className=selector.replace(/^[.#]/,''); sceneEl.appendChild(el);} el.textContent=String(text||''); if(selector==='.narr') el.style.whiteSpace='pre-line'; }
+  function setTextInScene(sceneEl, selector, text){ 
+    let el=sceneEl.querySelector(selector); 
+    if(!el){ 
+      el=document.createElement('div'); 
+      el.className=selector.replace(/^[.#]/,''); 
+      sceneEl.appendChild(el);
+    } 
+    el.textContent=String(text||''); 
+    // NOTE: white-space は CSS (.narr { white-space: pre-line; }) に委譲
+  }
   function setText(idOrKey, s){ const map={ title_key:'.title_key', titleKey:'.title_key', title:'.title', symbol:'.symbol', narr:'.narr' }; const sel=map[idOrKey]||'.narr', root=document.getElementById('content'); if(!root) return; const sc=root.querySelector('.scene')||root; setTextInScene(sc, sel, s); }
 
   /* ========================= Effects Hook ====================== */
@@ -159,7 +168,10 @@ Notes (delta):
     applyVersionToBody(scene || { uiVersion: 'T' });
     setBg((scene && scene.base) || '#000');
     const root = ensureSceneSurface();
-    const btn = document.createElement('button'); btn.id='playBtn'; btn.className='playBtn'; btn.textContent='▶︎'; btn.style.zIndex='2000'; btn.style.pointerEvents='auto';
+    const btn = document.createElement('button'); 
+    btn.id='playBtn'; 
+    btn.className='playBtn'; 
+    btn.textContent='▶︎'; 
     root.appendChild(btn);
     const start=(ev)=>{ if(ev) ev.preventDefault(); btn.disabled=true; if(!Ctrl.activationDone){ try{ const u=new SpeechSynthesisUtterance('あ'); u.lang='ja-JP'; u.volume=0.06; u.rate=1.0; speechSynthesis.speak(u); Ctrl.activationDone=true; }catch(_){} } primeTTS().catch(()=>{}); removeAllPlayButtons(); requestAnimationFrame(()=>{ gotoNext(); }); };
     btn.addEventListener('click', start, { passive:false });
@@ -224,9 +236,27 @@ Notes (delta):
     }
   }
 
-  async function gotoPage(i){ if(!Array.isArray(State.scenes)) return; if(i<0||i>=State.scenes.length) return; await ensureResumed(); State.idx=i; await playScene(State.scenes[i]); }
-  async function gotoNext(){ await ensureResumed(); await gotoPage(State.idx + 1); }
-  async function gotoPrev(){ await ensureResumed(); await gotoPage(State.idx - 1); }
+  async function gotoPage(i){ 
+    if(!Array.isArray(State.scenes)) return; 
+    if(i<0||i>=State.scenes.length) return; 
+    await ensureResumed(); 
+    State.idx=i; 
+    try{ 
+      window.dispatchEvent(new CustomEvent('player:page', { detail:{ index:i, total:(State.scenes||[]).length, scene: State.scenes[i] } }));
+    }catch(_){} 
+    await playScene(State.scenes[i]); 
+  }
+  async function gotoNext(){ 
+    await ensureResumed(); 
+    const N=(State.scenes||[]).length; 
+    if(State.idx + 1 >= N){ try{ window.dispatchEvent(new CustomEvent('player:end')); }catch(_){} return; } 
+    await gotoPage(State.idx + 1); 
+  }
+  async function gotoPrev(){ 
+    await ensureResumed(); 
+    if(State.idx - 1 < 0){ try{ window.dispatchEvent(new CustomEvent('player:begin')); }catch(_){} return; } 
+    await gotoPage(State.idx - 1); 
+  }
 
   /* ============================ Boot =========================== */
   async function boot(){
@@ -266,14 +296,25 @@ Notes (delta):
   }
 
   window.__player = window.__player || {
-    next:    () => { clearStop(); return gotoNext(); },
-    prev:    () => { clearStop(); return gotoPrev(); },
-    play:    () => { if(Ctrl.stopped || Ctrl.stopRequested){ clearStop(); return gotoPage(State.idx); } clearStop(); return gotoNext(); },
-    stop:    () => { requestSoftStop(); /* 既定: ページ末で停止（pause/cancelは行わない）*/ },
+    next:     () => { clearStop(); return gotoNext(); },
+    prev:     () => { clearStop(); return gotoPrev(); },
+    play:     () => { if(Ctrl.stopped || Ctrl.stopRequested){ clearStop(); return gotoPage(State.idx); } clearStop(); return gotoNext(); },
+    stop:     () => { requestSoftStop(); /* 既定: ページ末で停止（pause/cancelは行わない）*/ },
     stopHard:() => { return hardStop(); },
     restart: () => { clearStop(); return gotoPage(0); },
-    goto:    (i) => { clearStop(); return gotoPage(i|0); },
-    info:    () => ({ index: State.idx, total: (State.scenes||[]).length, playing: !!State.playingLock, stopRequested: !!Ctrl.stopRequested, stopped: !!Ctrl.stopped }),
+    goto:     (i) => { clearStop(); return gotoPage(i|0); },
+    info:     () => {
+      const total=(State.scenes||[]).length;
+      return { 
+        index: State.idx, 
+        total, 
+        playing: !!State.playingLock, 
+        stopRequested: !!Ctrl.stopRequested, 
+        stopped: !!Ctrl.stopped,
+        canPrev: (State.idx>0),
+        canNext: (State.idx+1<total)
+      };
+    },
     getScene:() => (State.scenes && State.scenes[State.idx]) || null
   };
 
