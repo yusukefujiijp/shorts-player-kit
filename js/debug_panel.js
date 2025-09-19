@@ -48,7 +48,7 @@ Policy:
         '<button id="dbg-toggle" class="dbg-toggle" title="展開/折り畳み">🐞 Debug <span id="dbg-arrow"></span></button>'+
         (QUICKBAR.items.play? '<button data-act="play" class="qb-btn play" aria-label="Play">▶︎</button>':'')+
         (QUICKBAR.items.stop? '<button data-act="stop" class="qb-btn stop" aria-label="Stop">■</button>':'')+
-        (QUICKBAR.items.next? '<button data-act="next" class="qb-btn next" aria-label="Next">&#x23ED;</button>':'')+
+        (QUICKBAR.items.next? '<button data-act="next" class="qb-btn next" aria-label="Next">➡︎</button>':'')+
         (QUICKBAR.items.ack?  '<span id="qb-ack" class="qb-ack is-idle" role="status" aria-live="polite" aria-atomic="true"><span class="qb-dot" aria-hidden="true"></span> Idle</span>':'')+
       '</div>'+
       '<div class="qb-row row2"><span id="dbg-status" class="dbg-status">Ready.</span></div>'+

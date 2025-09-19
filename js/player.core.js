@@ -3,6 +3,7 @@ Project:  shorts-player-kit
 File:     js/player.core.js
 Role:     Player Core (page-end stop default + Stop ACK UI hooks + Hard Stop hook)
 UX:       Emits UI-friendly custom events for TTS/playing states (Phase2)
+Roadmap:  Phase3/4/6 — TTS watchdog hardening, event-bus hooks, QuickBar Next連携
 Notes (delta):
   - Stopは「ページ末で静停止」を既定化（押下時は自動遷移だけを遮断し、当該ページの読み上げは完了させる）
   - Stop押下の“手応え”を可視化するため、即時ACK/確定ACKのカスタムイベントを追加
@@ -33,6 +34,7 @@ const Ctrl = {
 /* ======================= UI-facing State ===================== */
 // Debug UI 等が subscribe しやすいよう、TTS/再生状態を集約して発火
 const UiState = { speaking:false, paused:false, pending:false, playing:false };
+function emit(name, detail){ try{ window.dispatchEvent(new CustomEvent(name, { detail })); }catch(_){ } }
 function emitTtsState(next){
   const n = {
     speaking: (next.speaking ?? UiState.speaking),
@@ -43,18 +45,22 @@ function emitTtsState(next){
     UiState.speaking = n.speaking;
     UiState.paused   = n.paused;
     UiState.pending  = n.pending;
-    try{
-      window.dispatchEvent(new CustomEvent('player:tts-state', { detail:{ speaking:UiState.speaking, paused:UiState.paused, pending:UiState.pending } }));
-    }catch(_){}
+    emit('player:tts-state', { speaking:UiState.speaking, paused:UiState.paused, pending:UiState.pending });
   }
 }
 function emitPlaying(on){
   const v = !!on;
   if (UiState.playing === v) return;
   UiState.playing = v;
-  try{
-    window.dispatchEvent(new CustomEvent('player:status', { detail:{ playing:UiState.playing } }));
-  }catch(_){}
+  // 既存UI後方互換: playing は維持しつつ、index/total/canPrev/canNext を追加
+  const total=(State.scenes||[]).length;
+  emit('player:status', {
+    playing: UiState.playing,
+    index: State.idx,
+    total,
+    canPrev: (State.idx>0),
+    canNext: (State.idx+1<total)
+  });
 }
 // Stop要求の可視化（ACKとは別に "pending" をUIに共有）
 const setPending = (p)=> emitTtsState({ pending: !!p });
@@ -164,7 +170,8 @@ function speakStrict(text, rate = rateFor('narr'), role='narr'){
     // pause/resume は発火しない実装もあるが、来たらUIへ橋渡し
     u.onpause = ()=>{ emitTtsState({ paused:true  }); };
     u.onresume= ()=>{ emitTtsState({ paused:false }); };
-    u.onend=done; u.onerror=done;
+    u.onend=done;
+    u.onerror=(ev)=>{ try{ emit('player:tts-error', { role, reason: (ev && ev.error) || 'error' }); }catch(_){} done(); };
 
     try{ speechSynthesis.speak(u); }catch(_){ return done(); }
 
@@ -182,6 +189,7 @@ function speakStrict(text, rate = rateFor('narr'), role='narr'){
       }
     }, 700);
 
+    // Phase3: 文字数×係数 + 初期猶予。上限は 45s のまま（iOS/Safari ガード）
     const guardMs = Math.min(45000, 800 + (speakText.length * 110) / Math.max(0.5, eff));
     setTimeout(done, guardMs);
   });
@@ -193,10 +201,12 @@ async function speakOrWait(text, rate = rateFor('narr'), role='narr'){
   if(TTS_ENABLED){
     const parts = splitChunksJa(cleaned);
     emitTtsState({ speaking:true });          // 全体 speaking をON
+    emit('player:tts-start', { role, length: cleaned.length, rate: eff });
     try{
       for(const p of parts){ await speakStrict(p, eff, role); }
     } finally {
       emitTtsState({ speaking:false, paused:false }); // 終了時に確実にOFF
+      emit('player:tts-end', { role });
     }
   } else {
     await sleep(Math.min(20000, 800 + (cleaned.length * 100) / Math.max(0.5, eff)));
@@ -261,21 +271,25 @@ async function runContentSpeech(scene){
 async function playScene(scene){
   if(!scene) return;
   const kind = getSceneType(scene);
+  emit('player:scene-willstart', { index: State.idx, kind, scene });
   switch(kind){
     case 'placeholder':
       renderPlaceholder(scene);
+      emit('player:scene-didrender', { index: State.idx, kind });
       break;
     case 'content':
       if(State.playingLock) break; State.playingLock = true;
       try{
         emitPlaying(true);
         renderContent(scene);
+        emit('player:scene-didrender', { index: State.idx, kind });
         await primeTTS();
         await runContentSpeech(scene);
       } finally {
         State.playingLock = false;
         emitPlaying(false);
       }
+      emit('player:scene-didfinish', { index: State.idx, kind });
       if(Ctrl.stopRequested){ finalizeStopIfNeeded('content'); break; }
       if(!Ctrl.stopped && typeof gotoNext==='function') await gotoNext();
       break;
@@ -283,14 +297,21 @@ async function playScene(scene){
       if(State.playingLock) break; State.playingLock = true;
       try{
         emitPlaying(true);
-        renderEffect(scene); const raw=(scene.t ?? scene.duration ?? scene.durationMs ?? scene.effectDuration ?? 1200); const ms=Math.max(0, Math.min(60000, Number(raw)||1200)); await sleep(ms);
+        renderEffect(scene);
+        emit('player:scene-didrender', { index: State.idx, kind });
+        const raw=(scene.t ?? scene.duration ?? scene.durationMs ?? scene.effectDuration ?? 1200);
+        const ms=Math.max(0, Math.min(60000, Number(raw)||1200));
+        await sleep(ms);
       } finally { State.playingLock = false; emitPlaying(false); }
+      emit('player:scene-didfinish', { index: State.idx, kind });
       if(Ctrl.stopRequested){ finalizeStopIfNeeded('effect'); break; }
       if(!Ctrl.stopped && typeof gotoNext==='function') await gotoNext();
       break;
     default:
       if(State.playingLock) break; State.playingLock = true;
       try{ renderContent(scene); await primeTTS(); await runContentSpeech(scene); } finally { State.playingLock = false; }
+      emit('player:scene-didrender', { index: State.idx, kind:'content' });
+      emit('player:scene-didfinish', { index: State.idx, kind:'content' });
       if(Ctrl.stopRequested){ finalizeStopIfNeeded('content'); break; }
       if(!Ctrl.stopped && typeof gotoNext==='function') await gotoNext();
       break;
@@ -301,21 +322,23 @@ async function gotoPage(i){
   if(!Array.isArray(State.scenes)) return;
   if(i<0||i>=State.scenes.length) return;
   await ensureResumed();
+  emit('player:navigation-queued', { from: State.idx, to: i });
   State.idx=i;
-  try{
-    window.dispatchEvent(new CustomEvent('player:page', { detail:{ index:i, total:(State.scenes||[]).length, scene: State.scenes[i] } }));
-  }catch(_){}
+  try{ window.dispatchEvent(new CustomEvent('player:page', { detail:{ index:i, total:(State.scenes||[]).length, scene: State.scenes[i] } })); }catch(_){}
+  emit('player:navigation-applied', { index: i, total:(State.scenes||[]).length });
   await playScene(State.scenes[i]);
 }
 async function gotoNext(){
   await ensureResumed();
   const N=(State.scenes||[]).length;
   if(State.idx + 1 >= N){ try{ window.dispatchEvent(new CustomEvent('player:end')); }catch(_){} return; }
+  emit('player:navigation-queued', { from: State.idx, to: State.idx+1 });
   await gotoPage(State.idx + 1);
 }
 async function gotoPrev(){
   await ensureResumed();
   if(State.idx - 1 < 0){ try{ window.dispatchEvent(new CustomEvent('player:begin')); }catch(_){} return; }
+  emit('player:navigation-queued', { from: State.idx, to: State.idx-1 });
   await gotoPage(State.idx - 1);
 }
 
@@ -338,7 +361,7 @@ async function boot(){
       if(window.__ttsUtils && VC && VC.filter && typeof VC.filter.jaOnly==='boolean'){ __ttsUtils.setup({ filter:{ jaOnly:!!VC.filter.jaOnly } }); }
       // defaults → __ttsVoiceMap（未設定ロールのみ）
       window.__ttsVoiceMap = window.__ttsVoiceMap || {};
-      if(VC && VC.defaults){ ['tag','titleKey','title','narr'].forEach(k=>{ if(!window.__ttsVoiceMap[k] && VC.defaults[k]) window.__ttsVoiceMap[k]=VC.defaults[k]; }); }
+      if(VC && VC.defaults){ ['tag','titleKey','title','narr'].forEach(k=>{ if(!window.__ttsVoiceTMap[k] && VC.defaults[k]) window.__ttsVoiceMap[k]=VC.defaults[k]; }); }
     }catch(_){ }
 
     await gotoPage(0);
