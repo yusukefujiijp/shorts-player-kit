@@ -41,6 +41,26 @@ Policy:
     document.body.appendChild(host);
   }
 
+  /* =========== Panel height → CSS 変数伝搬（本文の潜り防止） =========== */
+  function syncPanelInset(){
+    try{
+      // qb-bar＋body を含む現在の実高
+      var h = host ? Math.max(0, Math.ceil(host.getBoundingClientRect().height)) : 0;
+      // 変数を root に書き出し（style.css の #wrapper が参照）
+      document.documentElement.style.setProperty('--content-pad-bottom', h + 'px');
+    }catch(_){}
+  }
+  // 初期呼び出し（フォントロード等で高さが変わる可能性があるため rAF でも追撃）
+  syncPanelInset();
+  requestAnimationFrame(syncPanelInset);
+  // リサイズや向き変更で再計算
+  try{
+    var ro = new ResizeObserver(function(){ syncPanelInset(); });
+    ro.observe(host);
+  }catch(_){}
+  window.addEventListener('resize', syncPanelInset, { passive:true });
+  window.addEventListener('orientationchange', function(){ setTimeout(syncPanelInset, 50); }, { passive:true });
+
   /* =========================== Markup =========================== */
   host.innerHTML =
     '<div class="qb-bar">'+
@@ -94,6 +114,7 @@ Policy:
       host.classList.toggle('collapsed', willCollapsed === 'true');
       if(arrow) arrow.textContent = (willCollapsed==='true') ? '▸' : '▾';
       try{ localStorage.setItem(key, String(willCollapsed==='true')); }catch(_){}
+      setTimeout(syncPanelInset, 0); // 折り畳み状態が変わったら高さも更新
     });
   })();
 
@@ -289,6 +310,9 @@ Policy:
       gotoInp.placeholder=(info.total>0)?((info.index+1)+' / '+info.total):'page#';
       lastIdx=info.index; lastTotal=info.total;
     }
+    // パネル内部レイアウトの微調整で高さが変わる場合に備えて軽く追従
+    // （コストは低いのでフレーム単位で問題なし）
+    // syncPanelInset(); // 必要になればコメント解除
     requestAnimationFrame(loop);
   })();
 })();
