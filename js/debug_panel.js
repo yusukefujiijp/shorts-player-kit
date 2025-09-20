@@ -40,24 +40,29 @@ Policy:
     host.id='debug-panel';
     document.body.appendChild(host);
   }
+  host.setAttribute('data-ready','true'); // 可視化デバッグ用のフラグ（CSSには影響しない）
 
   /* =========== Panel height → CSS 変数伝搬（本文の潜り防止） =========== */
+  // #wrapper が var(--content-pad-bottom) を読む前提。高さ0問題・SAFE-AREA・ソフトキーボードに強い。
   function syncPanelInset(){
     try{
-      // qb-bar＋body を含む現在の実高
       var h = host ? Math.max(0, Math.ceil(host.getBoundingClientRect().height)) : 0;
-      // 変数を root に書き出し（style.css の #wrapper が参照）
       document.documentElement.style.setProperty('--content-pad-bottom', h + 'px');
     }catch(_){}
   }
-  // 初期呼び出し（フォントロード等で高さが変わる可能性があるため rAF でも追撃）
+
+  // まずは一回（空でも0を書き出す）
   syncPanelInset();
+  // 後続レンダ（フォントロード・アイコン描画後）で追撃
   requestAnimationFrame(syncPanelInset);
-  // リサイズや向き変更で再計算
+
+  // パネル自体のサイズ変化に追従（ResizeObserver）
   try{
     var ro = new ResizeObserver(function(){ syncPanelInset(); });
     ro.observe(host);
   }catch(_){}
+
+  // ビューポート変化にも追従（回転・リサイズ）
   window.addEventListener('resize', syncPanelInset, { passive:true });
   window.addEventListener('orientationchange', function(){ setTimeout(syncPanelInset, 50); }, { passive:true });
 
@@ -86,6 +91,9 @@ Policy:
       (SECTIONS.ttsFlags? '<div id="dbg-flags" class="sec"></div>':'')+
       (SECTIONS.voices?   '<div id="dbg-voices" class="sec"></div>':'')+
     '</div>';
+
+  // マークアップが出そろったので、最終高さをもう一度反映
+  requestAnimationFrame(syncPanelInset);
 
   function $(s){ return host.querySelector(s); }
   var tgl      = $('#dbg-toggle');
@@ -243,8 +251,8 @@ Policy:
     var P=(window.__player||{});
     switch(act){
       case 'prev':     if(P.prev)     P.prev();     break;
-      case 'play':     try{ speechSynthesis.cancel(); }catch(_){} if(P.play) P.play(); break;
-      case 'stop':     try{ if(P.stop) P.stop(); }catch(_){} break;
+      case 'play':     try{ speechSynthesis.cancel(); }catch(_){ } if(P.play) P.play(); break;
+      case 'stop':     try{ if(P.stop) P.stop(); }catch(_){ } break;
       case 'next':     if(P.next)     P.next();     break;
       case 'restart':  if(P.restart)  P.restart();  break;
       case 'goto':
@@ -285,34 +293,50 @@ Policy:
     });
   }
 
-  /* ========================= Status Polling ===================== */
-  function renderLabBadges(ss){
+  /* ====================== Event-driven Status =================== */
+  var lastTts = { speaking:false, paused:false, pending:false };
+  function renderLabBadgesFromState(){
     if(!chipsEl) return;
     var pulse = (BADGE_MOTION==='off') ? '' : (BADGE_MOTION==='auto' ? ' pulse' : '');
     chipsEl.innerHTML =
-      '<span class="lab-badge lab-badge--speaking'+(ss.speaking?' on':'')+pulse+'">speaking</span>'+
-      '<span class="lab-badge lab-badge--paused'  +(ss.paused  ?' on':'')+pulse+'">paused</span>'+
-      '<span class="lab-badge lab-badge--pending' +(ss.pending ?' on':'')+pulse+'">pending</span>';
+      '<span class="lab-badge lab-badge--speaking'+(lastTts.speaking?' on':'')+pulse+'">speaking</span>'+
+      '<span class="lab-badge lab-badge--paused'  +(lastTts.paused  ?' on':'')+pulse+'">paused</span>'+
+      '<span class="lab-badge lab-badge--pending' +(lastTts.pending ?' on':'')+pulse+'">pending</span>';
   }
+  window.addEventListener('player:tts-state', function(ev){
+    try{
+      var d=(ev && ev.detail)||{};
+      lastTts.speaking=!!d.speaking;
+      lastTts.paused=!!d.paused;
+      lastTts.pending=!!d.pending;
+      renderLabBadgesFromState();
+    }catch(_){}
+  });
 
+  window.addEventListener('player:status', function(ev){
+    try{
+      if(!statusEl) return;
+      var d=(ev && ev.detail)||{};
+      var idx=(d.index|0)||0, total=(d.total|0)||0;
+      statusEl.textContent = 'Page '+(idx+1)+'/'+total+(d.playing?' | ▶︎ playing':' | ■ idle');
+    }catch(_){}
+  });
+
+  /* ========================= Fallback Loop ====================== */
+  // 既存互換: イベントが来なくても最低限の表示を維持
   var lastIdx=-1, lastTotal=-1;
   (function loop(){
     var P=window.__player||null; if(!P||!P.info){ requestAnimationFrame(loop); return; }
     var info=P.info(), scene=(P.getScene&&P.getScene())||null;
-    var ss=(window.speechSynthesis||{});
-    renderLabBadges(ss);
 
-    if (statusEl){
+    // イベントが来る前でもチップは描画しておく（初期は全オフ）
+    renderLabBadgesFromState();
+
+    if (statusEl && (info.index!==lastIdx || info.total!==lastTotal)){
       var ver=(scene && (scene.version || scene.type)) || '-';
       statusEl.textContent = 'Page '+(info.index+1)+'/'+info.total+' | '+ver+(info.playing?' | ▶︎ playing':' | ■ idle');
-    }
-    if(gotoInp && (info.index!==lastIdx || info.total!==lastTotal)){
-      gotoInp.placeholder=(info.total>0)?((info.index+1)+' / '+info.total):'page#';
       lastIdx=info.index; lastTotal=info.total;
     }
-    // パネル内部レイアウトの微調整で高さが変わる場合に備えて軽く追従
-    // （コストは低いのでフレーム単位で問題なし）
-    // syncPanelInset(); // 必要になればコメント解除
     requestAnimationFrame(loop);
   })();
 })();
