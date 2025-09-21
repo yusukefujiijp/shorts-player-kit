@@ -350,9 +350,11 @@ function renderPlaceholder(scene){
     if (!Ctrl.activationDone) {
       try { const u = new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); Ctrl.activationDone = true; } catch(_){}
     }
-    // 2. アプリ状態を「有効化済み」に移行
+    // 2. アプリ状態を「有効化済み」に移行し、イベントを発火
     document.body.classList.remove('app-unactivated');
-    // 2. ゲートを消去し、再生開始
+    try { window.dispatchEvent(new CustomEvent('player:activated')); } catch(_) {}
+    
+    // 3. ゲートを消去し、再生開始
     primeTTS().catch(()=>{}); gate.remove(); requestAnimationFrame(()=>{ gotoNext(); });
   };
   gate.addEventListener('click', start, {passive: false });

@@ -2,107 +2,89 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta id="vp" name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+  <meta id="vp" name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1" />
   <meta name="generator" content="NS-Core (Propose/Justify/Min-Execute/Verify/Record)" />
 
-  <meta name="description" content="shorts-player-kit のデモ。iOSでも軽快に動作する短編プレイヤーの実験プロジェクト。" />
   <title>shorts-player-kit | 短編プレイヤーのデモ</title>
+  <meta name="description" content="shorts-player-kit のデモ。iOSでも軽快に動作する短編プレイヤーの実験プロジェクト。" />
 
-  <link rel="canonical" href="https://yusukefujiijp.github.io/shorts-player-kit/"/>
+  <!-- Canonical -->
+  <link rel="canonical" href="https://yusukefujiijp.github.io/shorts-player-kit/" />
 
-  <meta property="og:type" content="website"/>
-  <meta property="og:locale" content="ja_JP"/>
-  <meta property="og:site_name" content="shorts-player-kit"/>
-  <meta property="og:title" content="shorts-player-kit | 短編プレイヤーのデモ"/>
-  <meta property="og:description" content="shorts-player-kit のデモ。iOSでも軽快に動作する短編プレイヤーの実験プロジェクト。"/>
-  <meta property="og:url" content="https://yusukefujiijp.github.io/shorts-player-kit/"/>
-  <meta property="og:image" content="./assets/ogp.png"/>
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="ja_JP" />
+  <meta property="og:site_name" content="shorts-player-kit" />
+  <meta property="og:title" content="shorts-player-kit | 短編プレイヤーのデモ" />
+  <meta property="og:description" content="shorts-player-kit のデモ。iOSでも軽快に動作する短編プレイヤーの実験プロジェクト。" />
+  <meta property="og:url" content="https://yusukefujiijp.github.io/shorts-player-kit/" />
+  <meta property="og:image" content="./assets/ogp.png" />
 
-  <meta name="twitter:card" content="summary_large_image"/>
-  <meta name="twitter:title" content="shorts-player-kit | 短編プレイヤーのデモ"/>
-  <meta name="twitter:description" content="shorts-player-kit のデモ。iOSでも軽快に動作する短編プレイヤーの実験プロジェクト。"/>
-  <meta name="twitter:image" content="./assets/ogp.png"/>
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="shorts-player-kit | 短編プレイヤーのデモ" />
+  <meta name="twitter:description" content="shorts-player-kit のデモ。iOSでも軽快に動作する短編プレイヤーの実験プロジェクト。" />
+  <meta name="twitter:image" content="./assets/ogp.png" />
 
-  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg"/>
-  <link rel="icon" type="image/x-icon" href="./assets/favicon.ico"/>
+  <!-- Icons -->
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+  <link rel="icon" type="image/x-icon" href="./assets/favicon.ico" />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Shippori+Mincho:wght@700&display=swap" rel="stylesheet"/>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Shippori+Mincho:wght@700&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="./style.css"/>
+  <!-- CSS -->
+  <link rel="stylesheet" href="./style.css" />
 </head>
 
-<body>
-  <div id="banner" role="banner" aria-live="polite"></div>
+<body class="app-unactivated">
+  <header id="banner" role="banner" aria-live="polite"></header>
 
+  <!-- 背景レイヤー -->
   <div id="bgColor"></div>
   <div id="bgBreath"></div>
 
+  <!-- コンテンツラッパー -->
   <div id="wrapper">
-    <div id="content" role="main" aria-live="polite"></div>
+    <main id="content" role="main" aria-live="polite"></main>
   </div>
 
+  <!-- デバッグパネル -->
   <div id="debug-panel"></div>
 
-  <script>
-    (function(){
-      try{
-        var de=document.documentElement, vv=window.visualViewport;
-        var isKeyboardExpected = false; // ★ 入力フォーカス中かどうかのフラグ
+  <!-- アクティベーションゲート -->
+  <div id="activation-gate" role="dialog" aria-label="Activation Required"></div>
 
-        function upd(){
-          var g=0;
-          if(vv){
-            g=Math.max(0, Math.ceil(window.innerHeight - (vv.offsetTop + vv.height)));
-            // ★ キーボードが出ていると予測される時だけ高さを適用
-            if (isKeyboardExpected){
-              var vh_val = Math.floor(vv.height) + 'px';
-              de.style.setProperty('--visual-viewport-h', vh_val);
-            } else {
-              // ★ それ以外の時は、常にフルハイトに戻す
-              de.style.setProperty('--visual-viewport-h', '100vh');
-              g=0; // バイアスもリセット
-            }
-          }
-          de.style.setProperty('--host-bias-bottom', g + 'px'); // これは bottom 配置用
-        }
-        if(vv){ vv.addEventListener('resize', upd); vv.addEventListener('scroll', upd); }
-        window.addEventListener('orientationchange', function(){ setTimeout(upd,0); }, {passive:true});
-        var i=0;(function warm(){ i++; upd(); if(i<6) requestAnimationFrame(warm); })();
-
-        // ★ 入力要素へのフォーカスを監視
-        document.addEventListener('focusin', function(e){
-          if(e && e.target && (e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA' || e.target.isContentEditable)){
-            isKeyboardExpected = true;
-          }
-        }, {capture:true, passive:true});
-        document.addEventListener('focusout', function(e){
-          isKeyboardExpected = false;
-          // フォーカスが外れたら即座にリセット処理をかける
-          setTimeout(upd, 200);
-        }, {capture:true, passive:true});
-      }catch(e){}
-    })();
-  </script>
-
+  <!-- JSロード順序 -->
+  <script src="./js/viewport_handler.js" defer></script>
   <script src="./js/tts-voice-utils.js" defer></script>
   <script src="./js/scene-effects.js" defer></script>
   <script src="./js/player.core.js" defer></script>
   <script src="./js/debug_config.js" defer></script>
   <script src="./js/debug_panel.js" defer></script>
+  <script src="./js/global-zoom-guard.js" defer></script>
 
   <noscript>
+    <!-- 唯一のインラインCSS例外 -->
     <style>
-      #wrapper{ display:flex; align-items:center; justify-content:center; height:100dvh; }
-      #content{ max-width:640px; padding:1rem; font-family: system-ui, sans-serif; }
+      #wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100dvh;
+      }
+      #content {
+        max-width: 640px;
+        padding: 1rem;
+        font-family: system-ui, sans-serif;
+      }
     </style>
-    <div id="content">
+    <main id="content">
       <h1>JavaScript がオフになっています</h1>
       <p>このプレイヤーは JavaScript により背景・演出・読み上げを制御します。<br>有効化してページを再読み込みしてください。</p>
-    </div>
+    </main>
   </noscript>
-
-  <script defer src="./js/global-zoom-guard.js"></script>
 </body>
 </html>

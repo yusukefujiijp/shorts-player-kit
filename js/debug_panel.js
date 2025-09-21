@@ -111,6 +111,7 @@ Policy:
   var gotoInp  = $('#dbg-goto');
   var ackEl    = $('#qb-ack');
   var chipsEl  = $('#dbg-statechips');
+  var badgeEls = {}; // ★ 変更点: バッジ要素を保持するオブジェクト
 
   /* ================== Swipe to Toggle Panel =================== */
   (function initSwipeToToggle(){
@@ -178,37 +179,55 @@ Policy:
      - 既存仕様: BADGE_MOTION に応じて pulse クラスを付与し speaking/paused/pending を可視化
      - 呼び出し側: loop() 内で毎フレーム呼ばれる（コスト低）
   */
+  // ★ 変更点: innerHTMLによる再構築を廃止し、クラス操作による効率的な更新に変更
   function renderLabBadges(ss){
-    if(!chipsEl) return;
-    // BADGE_MOTION は冒頭の設定に基づく（'auto' | 'static' | 'off'）
-    var pulse = (BADGE_MOTION==='off') ? '' : (BADGE_MOTION==='auto' ? ' pulse' : '');
-    chipsEl.innerHTML =
-      '<span class="lab-badge lab-badge--speaking'+(ss && ss.speaking ? ' on' : '')+pulse+'">speaking</span>'+
-      '<span class="lab-badge lab-badge--paused'  +(ss && ss.paused   ? ' on' : '')+pulse+'">paused</span>'+
-      '<span class="lab-badge lab-badge--pending' +(ss && ss.pending  ? ' on' : '')+pulse+'">pending</span>';
+    if (!chipsEl) return;
+    // 初回描画時にDOM要素を生成・保持
+    if (!badgeEls.speaking) {
+      chipsEl.innerHTML = ''; // 念のためクリア
+      var pulseClass = (BADGE_MOTION === 'off') ? '' : 'pulse';
+      var badgeNames = ['speaking', 'paused', 'pending'];
+      badgeNames.forEach(function(name) {
+        var badge = document.createElement('span');
+        badge.className = 'lab-badge lab-badge--' + name + ' ' + pulseClass;
+        badge.textContent = name;
+        chipsEl.appendChild(badge);
+        badgeEls[name] = badge;
+      });
+    }
+
+    // 状態に応じてクラスを切り替える
+    badgeEls.speaking.classList.toggle('on', ss && ss.speaking);
+    badgeEls.paused.classList.toggle('on', ss && ss.paused);
+    badgeEls.pending.classList.toggle('on', ss && ss.pending);
+  }
+
+  // ★ パネルの開閉状態をプログラムで設定する関数を新設
+  function setCollapsedState(shouldCollapse) {
+    var key='dbg.panel.collapsed.v3';
+    var collapseStr = shouldCollapse ? 'true' : 'false';
+    host.setAttribute('data-collapsed', collapseStr);
+    host.classList.toggle('collapsed', shouldCollapse);
+    if(arrow) arrow.textContent = shouldCollapse ? '▸' : '▾';
+    try{ localStorage.setItem(key, String(shouldCollapse)); }catch(_){}
   }
 
   // 折り畳み（localStorageに保持）→ data-collapsed & .collapsedへ反映（両互換）
   (function initUI(){
     var key='dbg.panel.collapsed.v3';
-    var collapsed=(function(){
+    var isCollapsedOnLoad=(function(){
       try{ var s=localStorage.getItem(key); if(s!=null) return (s==='true'); }catch(_){}
       return !!CFG_IN.collapsedDefault;
     })();
-
-    host.setAttribute('data-collapsed', collapsed ? 'true' : 'false');
-    host.classList.toggle('collapsed', !!collapsed);
-    if (arrow) arrow.textContent = collapsed? '▸':'▾';
+    setCollapsedState(isCollapsedOnLoad); // ★ 新設関数で初期状態を設定
 
     if (tgl) tgl.addEventListener('click', function(){
-      var now = (host.getAttribute('data-collapsed') === 'false');
-      var willCollapsed = now ? 'true' : 'false';
-      host.setAttribute('data-collapsed', willCollapsed);
-      host.classList.toggle('collapsed', willCollapsed === 'true');
-      if(arrow) arrow.textContent = (willCollapsed==='true') ? '▸' : '▾';
-      try{ localStorage.setItem(key, String(willCollapsed==='true')); }catch(_){}
-      // setTimeout(syncPanelInset, 0); // 高さ同期は ResizeObserver が自動で行う
+      var isCurrentlyCollapsed = host.getAttribute('data-collapsed') === 'true';
+      setCollapsedState(!isCurrentlyCollapsed); // ★ 新設関数で状態をトグル
     });
+
+    // ★ プレイヤーの初回有効化をリッスンし、一度だけパネルを閉じる
+    window.addEventListener('player:activated', () => setCollapsedState(true), { once: true });
   })();
 
   /* ============================ Flags =========================== */
