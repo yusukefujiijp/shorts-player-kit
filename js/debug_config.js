@@ -6,9 +6,30 @@ Notes:
   - QuickBar は 2 段固定。Row1: Debug / Play / Stop / Next / ACK, Row2: status。
   - 展開パネルは speaking/paused/pending（実験用パルス）を維持。
   - badges.motion: 'auto' | 'static' | 'off'
+  - レート規範は「役割別・絶対 (perRoleAbs)」。baseRate は UI 既定非表示。
+  - 本設定は「デフォルト ← ユーザー上書き」を安全にマージしてから凍結。
 */
 (function(){
   'use strict';
+
+  // ---- merge: defaults ← overrides（配列は置換、プレーンオブジェクトは再帰）----
+  function isPlainObject(v){
+    return !!v && Object.prototype.toString.call(v) === '[object Object]';
+  }
+  function deepMerge(base, over){
+    if (!isPlainObject(base)) return over;
+    var out = {};
+    Object.keys(base).forEach(function(k){ out[k] = base[k]; });
+    if (isPlainObject(over)){
+      Object.keys(over).forEach(function(k){
+        var bv = out[k], ov = over[k];
+        if (Array.isArray(ov)) out[k] = ov.slice();
+        else if (isPlainObject(ov) && isPlainObject(bv)) out[k] = deepMerge(bv, ov);
+        else out[k] = ov;
+      });
+    }
+    return out;
+  }
 
   function deepFreeze(o){
     if (!o || typeof o !== 'object') return o;
@@ -19,7 +40,8 @@ Notes:
     return Object.freeze(o);
   }
 
-  var cfg = {
+  // ---- Defaults（「役割別・絶対」レート / iOS-first / Debug-UI 二段QuickBar）----
+  var defaults = {
     /* 初期表示は折りたたみ */
     collapsedDefault: true,
 
@@ -67,14 +89,14 @@ Notes:
       defaults: {
         tag:      'ja-JP|Kyoko',
         titleKey: 'ja-JP|Kyoko',
-        title:    '',
-        narr:     ''
+        title:    'ja-JP|Kyoko',
+        narr:     'ja-JP|Kyoko'
       },
       hints: {
         tag:      ['ja-JP|Kyoko', 'Kyoko'],
         titleKey: ['ja-JP|Kyoko', 'Kyoko'],
-        title:    [],
-        narr:     []
+        title:    ['ja-JP|Kyoko', 'Kyoko'],
+        narr:     ['ja-JP|Kyoko', 'Kyoko']
       },
       filter: { jaOnly: true }
     },
@@ -92,5 +114,8 @@ Notes:
     }
   };
 
-  window.__dbgConfig = deepFreeze(cfg);
+  // 既存の window.__dbgConfig があれば優先してマージ（上書きは**ユーザー側**のみ）
+  var incoming = (typeof window.__dbgConfig === 'object' && window.__dbgConfig) ? window.__dbgConfig : {};
+  var merged   = deepMerge(defaults, incoming);
+  window.__dbgConfig = deepFreeze(merged);
 })();
