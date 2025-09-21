@@ -19,7 +19,14 @@
   --bg-color: var(--bg-A);
 
   /* DebugPanel の実高を本文へ伝える（中央揃え維持のための下余白） */
-  --content-pad-bottom: 0px;
+  /* 新正準名（JS が更新）：--debug-panel-h
+     旧名 --content-pad-bottom は互換フォールバックとして残す */
+  --debug-panel-h: 0px;
+  --content-pad-bottom: 0px; /* legacy fallback */
+
+  /* Safe-Area / host-bias（JS が visualViewport から供給） */
+  --sa-bottom: env(safe-area-inset-bottom, 0px);
+  --host-bias-bottom: 0px;
 
   /* Band color from JS */
   --symbol-bg-color: transparent;
@@ -46,6 +53,8 @@
 
   /* ==== Debug tokens (scoped) ==== */
   --chip-fg:#ffffff;
+  /* Debug panel bg (bar と safe-area 塗り足しで共有) */
+  --dbg-panel-bg: rgba(0,0,0,.82);
   --chip-gap:8px;
   --chip-pad-y:.28rem; --chip-pad-x:.6rem;
   --chip-radius:999px; --chip-weight:700;
@@ -81,13 +90,14 @@ body.text-on-light{ color:var(--txt-A); }
 /* ========== Layout ========== */
 #wrapper{
   position:relative; z-index:1;
-  width:100%; height:100vh; /* 初期は vh。端末対応で下で100dvhに昇格 */
+  width:100%; height:var(--visual-viewport-h, 100vh); /* JSから可変の高さを取得 */
   display:flex; flex-direction:column; justify-content:center; align-items:center;
   /* デバッグパネル出現時も本文が潜らないように下余白を可変で確保 */
-  padding-bottom: var(--content-pad-bottom, 0px);
+  padding-bottom: var(--debug-panel-h, var(--content-pad-bottom, 0px));
+  transition: height 0.2s ease-out;
 }
 @supports (height: 100dvh){
-  #wrapper{ height:100dvh; }
+  #wrapper{ height:var(--visual-viewport-h, 100dvh); }
 }
 
 /* Banner */
@@ -142,14 +152,15 @@ body.version-T #bgColor::after{
 #content{
   position:relative; z-index:1;
   width:100%; max-width:600px; margin:0 auto; text-align:center;
-  min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;
   padding:
     calc(env(safe-area-inset-top, 0px) + 0px)
     0
     calc(env(safe-area-inset-bottom, 0px) + 0px);
 }
 @supports (height: 100dvh){
-  #content{ min-height:100dvh; }
+  /* 親が可変高になったため、子も%で追従 */
+  #content{ min-height:100%; }
 }
 
 /* Theme shadows */
@@ -165,16 +176,37 @@ body.version-T .symbol,body.version-T .narr{ text-shadow:var(--shadow-B); }
 .scene{ width:90%; margin:0 auto; animation:fadeIn 700ms ease-out; }
 @keyframes fadeIn{ from{opacity:0; transform:translateY(20px);} to{opacity:1; transform:translateY(0);} }
 
-/* Section Tag */
+/* Section Tags (1行固定・チップ単位) */
+.section-tags{
+  display:flex; flex-wrap:nowrap;
+  align-items:center; justify-content:center;
+  gap:.35em;
+  margin-bottom:var(--section-tag-gap-bottom);
+}
+/* 単一タグ：中央に“きゅっ”と。伸ばさず、長文は省略記号でカット */
+.section-tags.single .section-tag{
+  flex:0 1 auto;                     /* ★ grow=0 で絶対に広がらない */
+  min-width:0;
+  max-inline-size: clamp(10ch, 80vw, 28ch); /* 上限だけ与えてellipsisを発動 */
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* Section Tag (chip) */
 .section-tag{
   display:inline-flex; align-items:center; gap:.35em;
-  padding:.2rem .6rem; margin-bottom:var(--section-tag-gap-bottom);
+  padding:.2rem .6rem; margin:0; /* 下余白は .section-tags 側で管理 */
   font-weight:700; letter-spacing:.02em; line-height:1.1;
   font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size:clamp(var(--section-tag-min), var(--section-tag-fluid), var(--section-tag-max));
   border-radius:var(--tag-radius);
   background: color-mix(in srgb, var(--symbol-bg-color) calc(var(--tag-bg-alpha)*100%), transparent);
   box-shadow:0 1px 2px rgba(0,0,0,var(--tag-shadow-alpha));
+  /* ← iOS Safari の“フル幅化”を初期状態で阻止 */
+  flex: none;                /* = 0 0 auto（成長も縮小もさせない） */
+  white-space: nowrap;       /* 文言は折り返さない */
+  text-align: center;        /* アイコン＋文言のバランス向上 */
+  max-width: 100%;           /* 念のための安全網（極端な長文対策） */
 }
 @supports not (color: color-mix(in srgb, red, blue)){
   .section-tag{ background:rgba(0,0,0,.06); }
@@ -268,14 +300,18 @@ body.version-T .symbol-bg::after{
 
 /* Host（JSは style を付けない） */
 #debug-panel{
-  position:fixed; left:0; right:0; bottom:0;
+  position:fixed; left:0; right:0;
+  bottom:0; /* 常に画面最下部に接地させる */
   z-index:2147483647; color:#fff;
   font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   padding-left:env(safe-area-inset-left, 0px);
   padding-right:env(safe-area-inset-right, 0px);
-  padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));
+  /* Safe Area / Keyboard 分を、内側の余白として確保 */
+  padding-bottom:calc(8px + max(var(--sa-bottom), var(--host-bias-bottom)));
   will-change:transform;
   width:100%; box-sizing:border-box; pointer-events:auto;
+  /* 背景はここで指定（bar と body で共有） */
+  background:var(--dbg-panel-bg);
 }
 
 /* QuickBar (2 rows) */
@@ -284,7 +320,8 @@ body.version-T .symbol-bg::after{
   grid-template-rows: var(--qb-row-h) var(--qb-row-h);
   row-gap:var(--qb-gap-y); column-gap:var(--qb-gap-x);
   padding:6px 8px;
-  background:rgba(0,0,0,.82);
+  /* 背景は親（#debug-panel）が持つので、ここは透明に */
+  background:transparent;
   border-top:1px solid rgba(255,255,255,.15);
   backdrop-filter:blur(4px);
 }

@@ -1,17 +1,25 @@
 {
   "$schema": "./schema.json",
-  "//": "Day 6 — Land animals and humankind. narr emojis at sentence start. 12 pages.",
+  "//": "Theme: 第三日 — 地が現れ、海が集められ、草木が芽生える（創世記 1:9–13）。TTS完了ベースの検証を最大限盛り込んだテスト用台本。",
   "__contract__": "schema v3.2; scripturePrologueIntro=true; short-form; iOS-first",
 
   "videoMeta": {
-    "dossierId": "genesis-day6-animals-humans-002",
-    "creationTimestamp": "2025-09-14T01:40:00+09:00",
-    "theme": "天地創造の第六日目",
-    "triviaTitle": "第六日—地の生き物と人が造られる",
-    "thumbnailText": "Day6 いのちと人",
-    "bannerText": "かたちに造られた人",
-    "meta": { "tts": { "filter": { "jaOnly": true } } },
-    "ui": { "a11y": { "prefersReducedMotion": false } }
+    "dossierId": "genesis-day3-land-and-vegetation-001",
+    "creationTimestamp": "2025-09-21T10:00:00+09:00",
+    "theme": "天地創造の第三日目",
+    "triviaTitle": "地と海、草と木",
+    "thumbnailText": "Day3 大地と草木",
+    "bannerText": "【創世記 1章9–13節】",
+    "ttf": "noto-shippori",
+    "tts": { "filter": { "jaOnly": true } },
+
+    "//phase3_hint": "Step 2 の検証要件を満たすため、既定の余韻（postDelayMs）を 1000ms に拡張しておく。",
+    "advancePolicy": { "mode": "ttsEnd", "postDelayMs": 1000, "quietMs": 300, "maxMs": 90000 },
+
+    "ui": {
+      "banner": { "pin": true },
+      "a11y": { "prefersReducedMotion": false }
+    }
   },
 
   "scenes": [
@@ -23,52 +31,53 @@
       "page": "3",
       "type": "content",
       "version": "A",
-      "sectionTag": "#Scripture",
-      "title_key": "【創世記 1章24–31節】",
-      "title": "地の生き物と人が造られる",
-      "symbol": "🌍🙂✋",
+      "sectionTags": ["#Scripture", "#Day3", "#Genesis1:9–13"],
+      "title_key": "【聖書朗読】",
+      "title": "地と海、草と木",
+      "symbol": "🌊🌿🗻",
       "base": "#f8fafc",
       "effect": "light-in",
-      "narr": "神は言われた。\n天の下の地は生き物を生じよ。\n人をわれらのかたちに。"
+      "narr": "神は言われた。「天の下の水は一所に集まり、乾いた所が現れよ。」そのとおりになった。神は乾いた所を『地』と名づけ、水の集まった所を『海』と名づけられた。──さらに、地は青草、種をもつ草、実のなる木を芽生えさせた。夕があり、朝があった。第三日。"
     },
 
     {
       "page": "4",
       "type": "content",
       "version": "A",
-      "sectionTag": "#Prologue",
-      "title_key": "【地のいのち】",
-      "title": "野や家畜、小さきもの",
-      "symbol": "🦁😊🫶",
+      "sectionTags": ["#Land", "#Sea", "#Separation"],
+      "title_key": "【大地が現れる】",
+      "title": "水が退き、地が姿を見せる",
+      "symbol": "🌊➡️🏞️",
       "base": "#fff7ed",
       "effect": "slide-up",
-      "narr": "🐘 大きな獣が歩く\n🐂 家のそばには家畜\n🐭 小さきものも走る"
+      "narr": "🌊 水は寄り集まり、広がる地が見えてくる。🪨 名づける行為は、世界を理解し、秩序を与えるしるし。"
     },
 
     {
       "page": "5",
       "type": "content",
       "version": "A",
-      "sectionTag": "#Trivia1",
-      "title_key": "【נֶפֶשׁ חַיָּה】",
-      "title": "ネフェシュ・ハイヤー＝生きるいのち",
-      "symbol": "📖😄👏",
+      "sectionTags": ["#Vegetation", "#Seed", "#Kinds", "#多めのタグで溢れ検証", "#UI_overflow_test"],
+      "title_key": "【芽生え】",
+      "title": "草と木、種あるもの",
+      "symbol": "🌱🌳✨",
       "base": "#e0f2fe",
       "effect": "zoom-in",
-      "narr": "💨 息をする＝生きる\n🍃 動いて食べて休む\n🎵 呼吸がリズムを作る"
+      "narr": "🌱『種を持つ』は継続性のキー。🌳 同じ“種類”ごとに増える──秩序の中にいのちが続いていく。"
     },
 
     {
       "page": "6",
       "type": "content",
       "version": "A",
-      "sectionTag": "#Trivia2",
-      "title_key": "【צֶלֶם／דְּמוּת】",
-      "title": "ツェレム／デムート＝かたち・似せて",
-      "symbol": "🧩🙂✋",
-      "base": "#e0f2fe",
+      "//": "タグ1個・長文チップの省略動作を検証。CSS側 .section-tags.single で中央1列・ellipsis。",
+      "sectionTags": ["#これはとてもながーーーーいテスト用タグ_中央一列で省略されることを確認するための超過長文チップ"],
+      "title_key": "【UI検証】",
+      "title": "タグ1個のみ（長文省略）",
+      "symbol": "🧪🏷️",
+      "base": "#fefce8",
       "effect": "slide-up",
-      "narr": "🪞 かたち＝表し方\n🔗 似せて＝関係の近さ\n👑 尊さの根拠になる"
+      "narr": "このページはタグ1つだけ。行溢れはせず、中央に1行で出し、左右は省略記号で収まるはず。"
     },
 
     { "page": "7", "type": "effect", "effectRole": "transition", "uiVersion": "T", "effect": "veil-sweep", "base": "#0f172a", "durationMs": 1400 },
@@ -77,51 +86,56 @@
       "page": "8",
       "type": "content",
       "version": "B",
-      "sectionTag": "#Sanctum",
-      "title_key": "【聖別】",
-      "title": "人の尊厳を保つ",
-      "symbol": "👣😌🫶",
+      "sectionTags": ["#Reflection", "#Manual", "#Pause"],
+      "title_key": "【手動遷移テスト】",
+      "title": "ここで一旦、手を止める",
+      "symbol": "⏸️🧭",
       "base": "#0a3a5a",
       "effect": "fade-in",
-      "narr": "🛠️ 人は道具じゃない\n💎 一人ひとりが尊い\n🤝 いのちを守り合う",
-      "sanctum": "holy_of_holies",
-      "polemicAxis": "Hellenism_vs_Hebraism",
-      "doctrineTags": ["ImagoDei", "CovenantCentered"]
+      "advancePolicy": { "mode": "manual" },
+      "narr": "このシーンは『自動では次へ行かない』設定です。読み上げが終わっても止まります。デバッグパネルの Next を押すか、キーボード操作で次へ進んでください。"
     },
 
     {
       "page": "9",
       "type": "content",
-      "version": "B",
-      "sectionTag": "#AntiHellenism",
-      "title_key": "【ちょっと反論】",
-      "title": "数値化だけで測らない",
-      "symbol": "⚖️🤨👏",
-      "base": "#083344",
-      "effect": "zoom-in",
-      "narr": "⏱️ 効率だけでは足りない\n🧭 関係と誠実が大事\n🪨 いのちに重さがある",
-      "sanctum": "holy_of_holies",
-      "polemicAxis": "Hellenism_vs_Hebraism",
-      "doctrineTags": ["DepartureFromHellenism", "SpiritLedTransformation"]
+      "version": "A",
+      "sectionTags": ["#PostDelay0", "#TTS完成直後", "#Snappy"],
+      "title_key": "【余韻0ms検証】",
+      "title": "話し終えたらすぐ次へ",
+      "symbol": "⚡️",
+      "base": "#eef2ff",
+      "effect": "slide-up",
+      "advancePolicy": { "postDelayMs": 0 },
+      "narr": "このシーンは postDelayMs=0。TTSが静寂になった瞬間に、直ちに次へ遷移します。"
     },
 
     {
       "page": "10",
       "type": "content",
       "version": "B",
-      "sectionTag": "#Blessing",
-      "title_key": "【祝福】",
-      "title": "増えよ、満ちよ、治めよ",
-      "symbol": "🌾🙂✋",
-      "base": "#083344",
-      "effect": "slide-up",
-      "narr": "🌱 地をよく耕す\n🐑 生き物をいたわる\n🛡️ 責任をもって治める",
-      "sanctum": "holy_of_holies",
-      "polemicAxis": "Hellenism_vs_Hebraism",
-      "doctrineTags": ["Stewardship", "CreationCare"]
+      "sectionTags": ["#Contrast", "#DarkBase", "#Accessibility"],
+      "title_key": "【コントラスト検証】",
+      "title": "暗い基調色でも読みやすいか",
+      "symbol": "🌑🔤",
+      "base": "#0b1020",
+      "effect": "zoom-in",
+      "narr": "背景が暗い色（#0b1020）。本文やタグが自動で高コントラストになるかを確認します。"
     },
 
-    { "page": "11", "type": "effect", "effectRole": "transition", "uiVersion": "T", "effect": "cross-fade", "base": "#0f172a", "durationMs": 1400 },
+    {
+      "page": "11",
+      "type": "content",
+      "version": "A",
+      "sectionTags": ["#LongNarration", "#Chunking", "#QuietGate"],
+      "title_key": "【長文TTS検証】",
+      "title": "静寂ゲートは正しく働くか",
+      "symbol": "📜🔊",
+      "base": "#f1f5f9",
+      "effect": "slide-up",
+      "advancePolicy": { "quietMs": 350, "maxMs": 60000 },
+      "narr": "ここは長めのテキストでチャンク分割と静寂検出を検証します。第三日の物語は、形を整える創造のクライマックスの一つです。水は境界を与えられ、地は秩序の中に役割を受け取り、そこに芽吹く草木は、次世代へ種を渡す仕組みを初めから備えています。読み上げ中に Next を押すと、待機はキャンセルされて即時遷移するはずです。読み上げが完了すると、静寂が一定時間続いた後に次へ進みます。"
+    },
 
     { "page": "12", "type": "effect", "effectRole": "closing", "uiVersion": "B", "effect": "fade-to-black", "base": "#020617", "durationMs": 1800 }
   ]

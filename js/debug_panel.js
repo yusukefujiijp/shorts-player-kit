@@ -42,29 +42,39 @@ Policy:
   }
   host.setAttribute('data-ready','true'); // 可視化デバッグ用のフラグ（CSSには影響しない）
 
-  /* =========== Panel height → CSS 変数伝搬（本文の潜り防止） =========== */
-  // #wrapper が var(--content-pad-bottom) を読む前提。高さ0問題・SAFE-AREA・ソフトキーボードに強い。
-  function syncPanelInset(){
-    try{
-      var h = host ? Math.max(0, Math.ceil(host.getBoundingClientRect().height)) : 0;
-      document.documentElement.style.setProperty('--content-pad-bottom', h + 'px');
-    }catch(_){}
-  }
-
-  // まずは一回（空でも0を書き出す）
-  syncPanelInset();
-  // 後続レンダ（フォントロード・アイコン描画後）で追撃
-  requestAnimationFrame(syncPanelInset);
-
-  // パネル自体のサイズ変化に追従（ResizeObserver）
-  try{
-    var ro = new ResizeObserver(function(){ syncPanelInset(); });
-    ro.observe(host);
-  }catch(_){}
-
-  // ビューポート変化にも追従（回転・リサイズ）
-  window.addEventListener('resize', syncPanelInset, { passive:true });
-  window.addEventListener('orientationchange', function(){ setTimeout(syncPanelInset, 50); }, { passive:true });
+  /* =========== Panel height → CSS 変数伝搬（rAF合流・一本化） =========== */
+  // CSS は --debug-panel-h を参照（旧名 --content-pad-bottom は CSS 側でフォールバック）
+  (function initInsetSync(){
+    var de = document.documentElement;
+    var rafId = 0, dirty = true;
+    var ro = null;
+    function measureAndApply(){
+      rafId = 0; dirty = false;
+      try{
+        var h = host ? Math.max(0, Math.ceil(host.getBoundingClientRect().height)) : 0;
+        // 正準名のみを出力（旧名は CSS フォールバックに委ねる）
+        de.style.setProperty('--debug-panel-h', h + 'px');
+      }catch(_){}
+    }
+    function schedule(){
+      if (dirty) return;
+      dirty = true;
+      if (!rafId) rafId = requestAnimationFrame(measureAndApply);
+    }
+    // 初回（DOM構築直後）
+    schedule();
+    requestAnimationFrame(schedule); // 遅延描画（フォント/アイコン）対策で追撃
+    // パネル自身のサイズ変化
+    try{ ro = new ResizeObserver(schedule); ro.observe(host); }catch(_){}
+    // ビューポート変化（端末UIのせり上がり等）
+    var vv = window.visualViewport;
+    if (vv){
+      vv.addEventListener('resize', schedule);
+      vv.addEventListener('scroll', schedule);
+    }
+    window.addEventListener('resize', schedule, {passive:true});
+    window.addEventListener('orientationchange', function(){ setTimeout(schedule, 50); }, {passive:true});
+  })();
 
   /* =========================== Markup =========================== */
   host.innerHTML =
@@ -92,8 +102,7 @@ Policy:
       (SECTIONS.voices?   '<div id="dbg-voices" class="sec"></div>':'')+
     '</div>';
 
-  // マークアップが出そろったので、最終高さをもう一度反映
-  requestAnimationFrame(syncPanelInset);
+  //（高さ同期は initInsetSync 内の rAF で自動実行）
 
   function $(s){ return host.querySelector(s); }
   var tgl      = $('#dbg-toggle');
@@ -102,6 +111,37 @@ Policy:
   var gotoInp  = $('#dbg-goto');
   var ackEl    = $('#qb-ack');
   var chipsEl  = $('#dbg-statechips');
+  /* [Hotfix] lightweight logger used by telemetry handlers
+     - 呼び出し元: TTS テレメトリ（player:tts-chunk / player:tts-quiet 等）
+     - 仕様: 最新行を statusEl に表示、履歴は簡易バッファに保持、console にも出力
+     - 依存関係: なし（DOM が未用意でも安全に no-op）
+  */
+  var __dbgLogStore = [];
+  function pushLog(msg){
+    var line = String(msg==null ? '' : msg);
+    try{
+      var ts = new Date().toLocaleTimeString();
+      line = '[' + ts + '] ' + line;
+    }catch(_){}
+    __dbgLogStore.push(line);
+    if (__dbgLogStore.length > 200) __dbgLogStore.shift();
+    try{ if (statusEl) statusEl.textContent = line; }catch(_){}
+    try{ console.log('%c[debug-panel]', 'color:#6cf', line); }catch(_){}
+  }
+
+  /* [Hotfix] renderLabBadges が参照時に未定義となるケースの補填
+     - 既存仕様: BADGE_MOTION に応じて pulse クラスを付与し speaking/paused/pending を可視化
+     - 呼び出し側: loop() 内で毎フレーム呼ばれる（コスト低）
+  */
+  function renderLabBadges(ss){
+    if(!chipsEl) return;
+    // BADGE_MOTION は冒頭の設定に基づく（'auto' | 'static' | 'off'）
+    var pulse = (BADGE_MOTION==='off') ? '' : (BADGE_MOTION==='auto' ? ' pulse' : '');
+    chipsEl.innerHTML =
+      '<span class="lab-badge lab-badge--speaking'+(ss && ss.speaking ? ' on' : '')+pulse+'">speaking</span>'+
+      '<span class="lab-badge lab-badge--paused'  +(ss && ss.paused   ? ' on' : '')+pulse+'">paused</span>'+
+      '<span class="lab-badge lab-badge--pending' +(ss && ss.pending  ? ' on' : '')+pulse+'">pending</span>';
+  }
 
   // 折り畳み（localStorageに保持）→ data-collapsed & .collapsedへ反映（両互換）
   (function initUI(){
@@ -122,7 +162,7 @@ Policy:
       host.classList.toggle('collapsed', willCollapsed === 'true');
       if(arrow) arrow.textContent = (willCollapsed==='true') ? '▸' : '▾';
       try{ localStorage.setItem(key, String(willCollapsed==='true')); }catch(_){}
-      setTimeout(syncPanelInset, 0); // 折り畳み状態が変わったら高さも更新
+      // setTimeout(syncPanelInset, 0); // 高さ同期は ResizeObserver が自動で行う
     });
   })();
 
@@ -242,6 +282,20 @@ Policy:
     setAckStopped();
   });
 
+  /* ====================== TTS chunk telemetry ==================== */
+  var lastChunkNote = '';
+  window.addEventListener('player:tts-chunk', function(ev){
+    var d=ev && ev.detail || {};
+    var tag = (d.phase||'') + ' ' + (d.index||0)+'/'+(d.total||0);
+    if (d.ms!=null) tag += ' '+(d.ms|0)+'ms';
+    lastChunkNote = '[chunk '+tag+']';
+    pushLog('tts:'+lastChunkNote+' len='+((d.len|0))+(d.reason?(' '+d.reason):''));
+  }, {passive:true});
+  window.addEventListener('player:tts-quiet', function(ev){
+    var d=ev && ev.detail || {};
+    pushLog('quiet: '+(d.passed?'ok':'skip')+' '+(d.quietMs|0)+'ms @'+(d.index||0)+'/'+(d.total||0));
+  }, {passive:true});
+
   /* ============================ Actions ========================= */
   host.addEventListener('click', function(e){
     var t=e.target;
@@ -318,7 +372,13 @@ Policy:
       if(!statusEl) return;
       var d=(ev && ev.detail)||{};
       var idx=(d.index|0)||0, total=(d.total|0)||0;
-      statusEl.textContent = 'Page '+(idx+1)+'/'+total+(d.playing?' | ▶︎ playing':' | ■ idle');
+      // This is now mainly handled by pushLog, but we keep a basic page status update
+      // for cases where no logs are being generated.
+      var currentPageStatus = 'Page '+(idx+1)+'/'+total+(d.playing?' | ▶︎ playing':' | ■ idle');
+      // Only update if the status is not already showing a recent log message
+      if(!statusEl.textContent.startsWith('[')) {
+        statusEl.textContent = currentPageStatus;
+      }
     }catch(_){}
   });
 
@@ -328,15 +388,14 @@ Policy:
   (function loop(){
     var P=window.__player||null; if(!P||!P.info){ requestAnimationFrame(loop); return; }
     var info=P.info(), scene=(P.getScene&&P.getScene())||null;
+    var ss=(window.speechSynthesis||{});
+    renderLabBadges(ss); // ← 定義済み（欠落対策済み）
 
-    // イベントが来る前でもチップは描画しておく（初期は全オフ）
-    renderLabBadgesFromState();
-
-    if (statusEl && (info.index!==lastIdx || info.total!==lastTotal)){
-      var ver=(scene && (scene.version || scene.type)) || '-';
-      statusEl.textContent = 'Page '+(info.index+1)+'/'+info.total+' | '+ver+(info.playing?' | ▶︎ playing':' | ■ idle');
+    if (gotoInp && (info.index!==lastIdx || info.total!==lastTotal)){
+      gotoInp.placeholder=(info.total>0)?((info.index+1)+' / '+info.total):'page#';
       lastIdx=info.index; lastTotal=info.total;
     }
+    // 高さ同期は initInsetSync の rAF に集約済み
     requestAnimationFrame(loop);
   })();
 })();

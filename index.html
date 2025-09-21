@@ -2,17 +2,14 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <!-- iOS Safe-Area 有効化（ズーム抑止を含む） -->
   <meta id="vp" name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1">
   <meta name="generator" content="NS-Core (Propose/Justify/Min-Execute/Verify/Record)" />
 
   <meta name="description" content="shorts-player-kit のデモ。iOSでも軽快に動作する短編プレイヤーの実験プロジェクト。" />
   <title>shorts-player-kit | 短編プレイヤーのデモ</title>
 
-  <!-- Canonical -->
   <link rel="canonical" href="https://yusukefujiijp.github.io/shorts-player-kit/"/>
 
-  <!-- Open Graph -->
   <meta property="og:type" content="website"/>
   <meta property="og:locale" content="ja_JP"/>
   <meta property="og:site_name" content="shorts-player-kit"/>
@@ -21,82 +18,74 @@
   <meta property="og:url" content="https://yusukefujiijp.github.io/shorts-player-kit/"/>
   <meta property="og:image" content="./assets/ogp.png"/>
 
-  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:title" content="shorts-player-kit | 短編プレイヤーのデモ"/>
   <meta name="twitter:description" content="shorts-player-kit のデモ。iOSでも軽快に動作する短編プレイヤーの実験プロジェクト。"/>
   <meta name="twitter:image" content="./assets/ogp.png"/>
 
-  <!-- Icons -->
   <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg"/>
   <link rel="icon" type="image/x-icon" href="./assets/favicon.ico"/>
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Shippori+Mincho:wght@700&display=swap" rel="stylesheet"/>
 
-  <!-- MUST #1: CSS first -->
   <link rel="stylesheet" href="./style.css"/>
-
-  <!-- === SAFE-AREA GUARD（既存維持） === -->
-  <style>
-    :root{
-      --sa-top: env(safe-area-inset-top, 0px);
-      --sa-right: env(safe-area-inset-right, 0px);
-      --sa-bottom: env(safe-area-inset-bottom, 0px);
-      --sa-left: env(safe-area-inset-left, 0px);
-      --host-bias-bottom: 0px;
-    }
-    html, body { margin:0; padding:0; }
-    html, body, #wrapper { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
-    body{
-      padding-bottom: calc(var(--sa-bottom) + var(--host-bias-bottom));
-      padding-bottom: max(var(--sa-bottom), var(--host-bias-bottom));
-    }
-    /* #debug-panel は CSS 側で fixed; ここは safe-area の下フチだけ重ね塗り */
-    #debug-panel::before{
-      content:""; position:absolute; left:0; right:0;
-      bottom:calc(-1 * var(--sa-bottom)); height:var(--sa-bottom);
-      background: inherit; border-bottom-left-radius: inherit; border-bottom-right-radius: inherit;
-      pointer-events:none;
-    }
-  </style>
 </head>
 
 <body>
   <div id="banner" role="banner" aria-live="polite"></div>
 
-  <!-- 背景レイヤー（順序重要：ベース → 呼吸） -->
   <div id="bgColor"></div>
   <div id="bgBreath"></div>
 
-  <!-- コンテンツ領域（中央寄せは style.css で制御） -->
   <div id="wrapper">
     <div id="content" role="main" aria-live="polite"></div>
   </div>
 
-  <!-- デバッグパネルのホスト（無くてもJSが自動生成するが、明示ホストを優先） -->
   <div id="debug-panel"></div>
 
-  <!-- Host bias feeder -->
   <script>
     (function(){
       try{
         var de=document.documentElement, vv=window.visualViewport;
+        var isKeyboardExpected = false; // ★ 入力フォーカス中かどうかのフラグ
+
         function upd(){
           var g=0;
-          if(vv) g=Math.max(0, Math.ceil(window.innerHeight - (vv.offsetTop + vv.height)));
-          de.style.setProperty('--host-bias-bottom', g + 'px');
+          if(vv){
+            g=Math.max(0, Math.ceil(window.innerHeight - (vv.offsetTop + vv.height)));
+            // ★ キーボードが出ていると予測される時だけ高さを適用
+            if (isKeyboardExpected){
+              var vh_val = Math.floor(vv.height) + 'px';
+              de.style.setProperty('--visual-viewport-h', vh_val);
+            } else {
+              // ★ それ以外の時は、常にフルハイトに戻す
+              de.style.setProperty('--visual-viewport-h', '100vh');
+              g=0; // バイアスもリセット
+            }
+          }
+          de.style.setProperty('--host-bias-bottom', g + 'px'); // これは bottom 配置用
         }
         if(vv){ vv.addEventListener('resize', upd); vv.addEventListener('scroll', upd); }
         window.addEventListener('orientationchange', function(){ setTimeout(upd,0); }, {passive:true});
         var i=0;(function warm(){ i++; upd(); if(i<6) requestAnimationFrame(warm); })();
+
+        // ★ 入力要素へのフォーカスを監視
+        document.addEventListener('focusin', function(e){
+          if(e && e.target && (e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA' || e.target.isContentEditable)){
+            isKeyboardExpected = true;
+          }
+        }, {capture:true, passive:true});
+        document.addEventListener('focusout', function(e){
+          isKeyboardExpected = false;
+          // フォーカスが外れたら即座にリセット処理をかける
+          setTimeout(upd, 200);
+        }, {capture:true, passive:true});
       }catch(e){}
     })();
   </script>
 
-  <!-- Load order (all JS under ./js/) — defer で**HTML順序**に実行 -->
   <script src="./js/tts-voice-utils.js" defer></script>
   <script src="./js/scene-effects.js" defer></script>
   <script src="./js/player.core.js" defer></script>
