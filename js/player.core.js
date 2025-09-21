@@ -14,7 +14,8 @@ Notes (delta):
  - speakパイプ: scrub → stripMarkdownLight → runtime speechFixes → speakOrWait（watchdog付き）
 */
 
-(() => {
+import { analyzeColor, applyColorTheme } from './utils/color.js';
+
 'use strict';
 
 /* ======================= Feature flags ======================= */
@@ -116,24 +117,10 @@ function setBg(c){
  }catch(_){}
 }
 function applyVersionToBody(scene){ const v=(scene&&(scene.version||scene.uiVersion))||'A'; const b=document.body; b.classList.remove('version-A','version-B','version-T'); b.classList.add(v==='B'?'version-B':(v==='T'?'version-T':'version-A')); }
+
 function applyReadableTextColor(base){
- // クラス切替の“ヒント”。base 未指定/不正なら既存クラスを外して CSS 既定に委ねる
- try{
-  const body=document.body;
-  const s=String(base||'').trim();
-  const m=/^#?([0-9a-f]{6})$/i.exec(s);
-  if(!m){
-   body.classList.remove('text-on-dark','text-on-light');
-   delete body.dataset.contrast;
-   return;
-  }
-  const h=m[1], r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
-  const Y=0.299*r+0.587*g+0.114*b;
-  const onDark = (Y < 140);
-  body.classList.toggle('text-on-dark',  onDark);
-  body.classList.toggle('text-on-light', !onDark);
-  body.dataset.contrast = onDark ? 'dark' : 'light';
- }catch(_){}
+  const analysisResult = analyzeColor(base);
+  applyColorTheme(analysisResult);
 }
 
 /* ========================= Scene Surface ===================== */
@@ -576,27 +563,27 @@ async function hardStop(){
  finalizeStopIfNeeded('hard');
 }
 
-window.__player = window.__player || {
- next: () => { clearStop(); return gotoNext(); },
- prev: () => { clearStop(); return gotoPrev(); },
- play: () => { if(Ctrl.stopped || Ctrl.stopRequested){ clearStop(); return gotoPage(State.idx); } clearStop(); return gotoNext(); },
- stop: () => { requestSoftStop(); /* 既定: ページ末で停止（pause/cancelは行わない）*/ },
- stopHard:() => { return hardStop(); },
- restart: () => { clearStop(); return gotoPage(0); },
- goto: (i) => { clearStop(); return gotoPage(i|0); },
- info: () => {
-  const total=(State.scenes||[]).length;
-  return {
-   index: State.idx,
-   total,
-   playing: !!State.playingLock,
-   stopRequested: !!Ctrl.stopRequested,
-   stopped: !!Ctrl.stopped,
-   canPrev: (State.idx>0),
-   canNext: (State.idx+1<total)
-  };
- },
- getScene:() => (State.scenes && State.scenes[State.idx]) || null
+export const player = {
+  next: () => { clearStop(); return gotoNext(); },
+  prev: () => { clearStop(); return gotoPrev(); },
+  play: () => { if(Ctrl.stopped || Ctrl.stopRequested){ clearStop(); return gotoPage(State.idx); } clearStop(); return gotoNext(); },
+  stop: () => { requestSoftStop(); /* 既定: ページ末で停止（pause/cancelは行わない）*/ },
+  stopHard:() => { return hardStop(); },
+  restart: () => { clearStop(); return gotoPage(0); },
+  goto: (i) => { clearStop(); return gotoPage(i|0); },
+  info: () => {
+    const total=(State.scenes||[]).length;
+    return {
+      index: State.idx,
+      total,
+      playing: !!State.playingLock,
+      stopRequested: !!Ctrl.stopRequested,
+      stopped: !!Ctrl.stopped,
+      canPrev: (State.idx>0),
+      canNext: (State.idx+1<total)
+    };
+  },
+  getScene:() => (State.scenes && State.scenes[State.idx]) || null
 };
 
 window.__playerCore = Object.assign((window.__playerCore || {}), {
@@ -610,4 +597,3 @@ else document.addEventListener('DOMContentLoaded', boot, { once:true });
 
 /* ============== voiceschanged: 発話中断しない最適化 ========= */
 try{ if('speechSynthesis' in window){ window.speechSynthesis.addEventListener('voiceschanged', ()=>{ refreshJPVoice(); }); } }catch(_){ }
-})();

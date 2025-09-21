@@ -1,0 +1,57 @@
+--- a/js/player.core.js
++++ b/js/player.core.js
+@@ -13,8 +13,10 @@
+  - speakパイプ: scrub → stripMarkdownLight → runtime speechFixes → speakOrWait（watchdog付き）
+ */
+ 
+-(() => {
++(async () => {
+ 'use strict';
++
++const { analyzeColor, applyColorTheme } = await import('./utils/color.js');
+ 
+ /* ======================= Feature flags ======================= */
+ const TTS_ENABLED = (typeof window.TTS_ENABLED === 'boolean') ? window.TTS_ENABLED : true;
+@@ -148,51 +150,9 @@
+  }catch(_){}
+ }
+ function applyVersionToBody(scene){ const v=(scene&&(scene.version||scene.uiVersion))||'A'; const b=document.body; b.classList.remove('version-A','version-B','version-T'); b.classList.add(v==='B'?'version-B':(v==='T'?'version-T':'version-A')); }
+-function applyReadableTextColor(base){
+-  // クラス切替の“ヒント”＋ TagChip 前景色の自動化。
+-  // base 未指定/不正なら既存クラスを外して CSS 既定に委ねる。
+-  try{
+-    const body=document.body;
+-    const s=String(base||'').trim();
+-    const m=/^#?([0-9a-f]{6})$/i.exec(s);
+-    if(!m){
+-      body.classList.remove('text-on-dark','text-on-light');
+-      delete body.dataset.contrast;
+-      // TagChip 自動前景ヒントも解除
+-      document.documentElement.style.removeProperty('--tagchip-fg-auto');
+-      return;
+-    }
+-    const h=m[1], r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
+-    // 相対輝度（sRGB → 線形化）で 0..1 の L を得る
+-    const sRGB=(x)=>{ x/=255; return (x<=0.03928)? (x/12.92) : Math.pow((x+0.055)/1.055, 2.4); };
+-    const R=sRGB(r), G=sRGB(g), B=sRGB(b);
+-    const L=0.2126*R + 0.7152*G + 0.0722*B;
+-    // 青系が暗く感じやすい分を見込んで 0.45 をしきい値に
+-    const onDark = (L < 0.45);
+-    body.classList.toggle('text-on-dark',  onDark);
+-    body.classList.toggle('text-on-light', !onDark);
+-    body.dataset.contrast = onDark ? 'dark' : 'light';
+-
+-    // TagChip 文字色の白/黒を自動供給（CSS 側は未供給時 #fff を既定）
+-    const chipFg = onDark ? '#ffffff' : '#111111';
+-    document.documentElement.style.setProperty('--tagchip-fg-auto', chipFg);
+-  }catch(_){}
+-}
+ 
++function applyReadableTextColor(base){
++  const analysisResult = analyzeColor(base);
++  applyColorTheme(analysisResult);
++}
+ /* ========================= Scene Surface ===================== */
+ function ensureSceneSurface(){ ensureBgLayer(); let root=document.getElementById('content'); if(!root){ root=document.createElement('div'); root.id='content'; document.body.appendChild(root);} root.innerHTML=''; return root; }
+ function createSceneShell(){ const el=document.createElement('div'); el.className='scene'; return el; }
+

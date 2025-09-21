@@ -1,0 +1,65 @@
+diff --git a/style.css b/style.css
+--- a/style.css
++++ b/style.css
+@@
+-:root{
+-  /* 既存 … （省略） */
+-  --bg-color: #000;
+-}
++:root{
++  /* 背景色（JSが常に更新） */
++  --bg-color: #000;
++
++  /* ---- Tag/Chip トークン（Fallback: HSL近似） ------------------------- */
++  /* 背景をやや明るく（または暗く）して"面"を作る。strokeはさらに段差をつけて"線"を作る。 */
++  /* Fallback：color-mix/oklch 非対応環境。HSLで簡易的に L を押し上げる（or 引き下げる）。 */
++  --chip-bg: hsl( var(--chip-h,210) var(--chip-s,20%) calc( min(95%, var(--chip-l,  clamp(0%, 100%, 70%))) ) );
++  --chip-stroke: hsl( var(--chip-h,210) var(--chip-s,20%) calc( min(98%, var(--chip-l,  clamp(0%, 100%, 78%))) ) );
++  /* 文字色は JS が --chip-fg-auto を設定、無ければ白を既定とする */
++  --chip-fg: var(--chip-fg-auto, #fff);
++}
++
++/* OKLCH/ color-mix が使える環境では知覚明度ベースに置き換え */
++@supports (color: oklch(60% 0 0)) and (color: color-mix(in oklch, white, black)){
++  :root{
++    /* 背景を基準に、面は +ΔL、線は +ΔL2。青系に沈みやすい問題を回避。 */
++    --chip-bg:     color-mix(in oklch, var(--bg-color) 65%, white);  /* ≒ L を +0.20 前後 */
++    --chip-stroke: color-mix(in oklch, var(--bg-color) 45%, white);  /* ≒ L を +0.30 前後（境界線） */
++    --chip-fg:     var(--chip-fg-auto, oklch(100% 0 0));             /* 自動未設定時は白 */
++  }
++}
++
++/* より高コントラスト環境ではさらに押し上げる（屋外・視力配慮） */
++@media (prefers-contrast: more){
++  @supports (color: color-mix(in oklch, white, black)){
++    :root{
++      --chip-bg:     color-mix(in oklch, var(--bg-color) 55%, white);
++      --chip-stroke: color-mix(in oklch, var(--bg-color) 35%, white);
++    }
++  }
++}
+@@
+-.section-tags{
+-  /* 既存の行スタイル …（省略） */
+-}
+-.section-tag{
+-  /* 既存のチップスタイル …（省略） */
+-}
++.section-tags{
++  /* 行は既存のまま（改行やパッキングはJS）。特別な背景は持たない。 */
++}
++.section-tag{
++  background: var(--chip-bg);
++  color: var(--chip-fg);
++  border: 1px solid var(--chip-stroke);
++  border-radius: 999px;
++  padding: .22rem .56rem;
++  line-height: 1.05;
++  font-weight: 600;                 /* Large Text寄りで 3:1 基準も取りに行く */
++  /* 輪郭の微グロー（背景へ溶けるのを防ぐ。過度な装飾は避ける） */
++  box-shadow: 0 0 0.5px var(--chip-stroke) inset;
++}
++
++/* text-on-light / text-on-dark ヒントがある時は若干の調整（任意） */
++body.text-on-dark .section-tag{ filter: saturate(.92); }
++body.text-on-light .section-tag{ filter: saturate(.98); }

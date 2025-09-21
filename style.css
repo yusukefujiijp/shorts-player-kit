@@ -56,6 +56,16 @@
 	--tag-border-alpha-B: .18;
 	--tag-shadow-alpha: .12;
 
+	/* ===== Section Tag (Chip) Contrast Tokens =====
+	   Debug用 --chip-* とも衝突しない独立トークン。
+	   1) まずフォールバック（HSL近似）
+	   2) @supports で OKLCH + color-mix に“上書き”
+	   3) JS が --tagchip-fg-auto に白/黒を供給（未設定なら #fff） */
+	--tagchip-fg: var(--tagchip-fg-auto, #fff);
+	/* Fallback: HSL（やや明るい面・さらに明るい線） */
+	--tagchip-bg: hsl(210 16% 72%);
+	--tagchip-stroke: hsl(210 12% 82%);
+
 	/* Band paddings */
 	--symbol-outer-gap-y: 1rem;
 	--symbol-inner-gap-y: .30rem;
@@ -358,7 +368,10 @@ body.version-T .narr {
 	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 	font-size: clamp(var(--section-tag-min), var(--section-tag-fluid), var(--section-tag-max));
 	border-radius: var(--tag-radius);
-	background: color-mix(in srgb, var(--symbol-bg-color) calc(var(--tag-bg-alpha)*100%), transparent);
+	/* ★ 背景色に追従して面・線・文字を自動確保（トークンで一元管理） */
+	background: var(--tagchip-bg);
+	border: 1px solid var(--tagchip-stroke);
+	color: var(--tagchip-fg);
 	box-shadow: 0 1px 2px rgba(0, 0, 0, var(--tag-shadow-alpha));
 	/* ← iOS Safari の“フル幅化”を初期状態で阻止 */
 	flex: none;
@@ -373,19 +386,32 @@ body.version-T .narr {
 
 @supports not (color: color-mix(in srgb, red, blue)) {
 	.section-tag {
+		/* color-mix 非対応端末の更なる保険（極薄グレー） */
 		background: rgba(0, 0, 0, .06);
 	}
 }
 
-body.version-A .section-tag {
-	color: var(--txt-A);
-	border: 1px solid rgba(0, 0, 0, var(--tag-border-alpha-A));
+/* 旧: 版別での .section-tag 色上書きは撤去
+   （背景に追従するため、A/B/Tごとの固定色は使わない） */
+
+/* OKLCH + color-mix が使える環境では“知覚明度”で安全側へ再定義 */
+@supports (color: oklch(60% 0 0)) and (color: color-mix(in oklch, white, black)) {
+	:root{
+		/* 背景 --bg-color を基準に、面(L↑)と線(L↑↑)をブレンド */
+		--tagchip-bg:     color-mix(in oklch, var(--bg-color) 65%, white);
+		--tagchip-stroke: color-mix(in oklch, var(--bg-color) 45%, white);
+		/* 文字色は JS が --tagchip-fg-auto に供給（未供給時は #fff） */
+	}
 }
 
-body.version-B .section-tag,
-body.version-T .section-tag {
-	color: var(--txt-B);
-	border: 1px solid rgba(255, 255, 255, var(--tag-border-alpha-B));
+/* ユーザーが高コントラストを希望する環境ではさらに押し上げ */
+@media (prefers-contrast: more){
+	@supports (color: color-mix(in oklch, white, black)){
+		:root{
+			--tagchip-bg:     color-mix(in oklch, var(--bg-color) 55%, white);
+			--tagchip-stroke: color-mix(in oklch, var(--bg-color) 35%, white);
+		}
+	}
 }
 
 /* Titles & Narration */

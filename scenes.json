@@ -1,104 +1,241 @@
 {
   "videoMeta": {
-    "dossierId": "demo-001",
-    "creationTimestamp": "2025-09-21T12:00:00Z",
-    "theme": "A",
-    "thumbnailText": "Demo",
-    "bannerText": "Shorts Player Kit",
-    "meta": {
-      "tts": {
-        "filter": { "jaOnly": true }
-      }
-    },
+    "dossierId": "vayelech-ultra-long-v1",
+    "creationTimestamp": "2025-09-21T10:00:00Z",
+    "theme": "パラシャット・ヴァイエレフ",
+    "thumbnailText": "ヴァイエレフ：勇気と継承",
+    "bannerText": "申命記 31:1–30",
+    "meta": { "tts": { "filter": { "jaOnly": true } } },
     "contract": {
       "structure": {
         "requireOpeningEffect": true,
         "requireTransitionT": true,
-        "requireClosingEffect": true,
-        "minA": 1,
-        "minB": 1,
-        "scripturePrologueIntro": false
-      }
+        "requireClosingEffect": true
+      },
+      "versionThemeMap": { "A": "dark", "B": "dark", "T": "dark" }
     },
-    "advancePolicy": {
-      "quietMs": 300,
-      "postDelayMs": 250
-    }
+    "advancePolicy": { "quietMs": 300, "postDelayMs": 250 }
   },
+
   "scenes": [
-    {
-      "page": "1",
-      "type": "placeholder",
-      "title": "Tap to Start"
+    { "page": "1",  "type": "placeholder", "title": "Tap to Start" },
+
+    { "page": "2",  "type": "effect", "effectRole": "opening", "effect": "light-in", "base": "#0b1220", "effectDuration": 1400 },
+
+    { "page": "3",  "type": "content", "version": "A",
+      "sectionTags": ["#Scripture","#Vayelech","#Leadership"],
+      "title_key": "【I-序】", "title": "そしてモーセは行った", "symbol": "📜🙂✋", "base": "#101723",
+      "narr": "ヴァイエレフ──「そしてモーセは行った」。\n静的な宣言ではなく、民のもとへ赴く能動の牧会。"
     },
 
-    {
-      "page": "2",
-      "type": "effect",
-      "effect": "light-in",
-      "effectRole": "opening",
-      "uiVersion": "A",
-      "base": "#f9f9f7",
-      "t": 900
+    { "page": "4",  "type": "content", "version": "T",
+      "sectionTags": ["#Shepherd","#Transition","#Care"],
+      "title_key": "【I-1】", "title": "巡回する指導者", "symbol": "📜🙂✋", "base": "#0f1722",
+      "narr": "彼は各宿営を巡り、不安を聴き、励ます。\n移行期の痛みを見過ごさない“羊飼い”の最終奉仕。"
     },
 
-    {
-      "page": "3",
-      "type": "content",
-      "version": "A",
-      "sectionTags": ["#Scripture", "#Trivia1", "#Prologue"],
-      "title_key": "【創世記 1:1 抄】",
-      "title": "はじめに",
-      "symbol": "🌅",
-      "base": "#f9f9f7",
-      "narr": "はじめに、神は天地を創造された。\n\n神は光あれと言われ、光があった。"
+    { "page": "5",  "type": "content", "version": "A",
+      "sectionTags": ["#Scripture","#Age120","#Authority"],
+      "title_key": "【I-2】", "title": "一二〇歳の宣言", "symbol": "📜🙂✋", "base": "#0e1a2a",
+      "narr": "「わたしは出入りできない」──弱さではなく移譲のしるし。\n終わりは老衰でなく、召命の完了。"
     },
 
-    {
-      "page": "4",
-      "type": "effect",
-      "effect": "fade-in",
-      "effectRole": "transition",
-      "uiVersion": "B",
-      "base": "#1c1c1e",
-      "t": 800
+    { "page": "6",  "type": "content", "version": "T",
+      "sectionTags": ["#Rashi","#Paradox","#Lawful"],
+      "title_key": "【I-3】", "title": "“できない”の意味", "symbol": "📜🙂✋", "base": "#0f1c2f",
+      "narr": "ラシ：それは「許されていない」の意。\n権威は神から与えられ、時に神によって収束される。"
     },
 
-    {
-      "page": "5",
-      "type": "content",
-      "version": "B",
-      "sectionTags": ["#Trivia2", "#Scripture", "#Prologue"],
-      "title_key": "【考察】",
-      "title": "光の順序",
-      "symbol": "✨",
-      "base": "#1c1c1e",
-      "narr": "秩序は混沌から切り分けられる。光は先に定められ、次に区別が続く。\n\n区別は分断ではなく、目的への導線である。",
-      "sanctum": "holy_of_holies",
-      "polemicAxis": "Hellenism_vs_Hebraism",
-      "doctrineTags": ["HolyOfHolies", "DepartureFromHellenism", "CovenantCentered"]
+    { "page": "7",  "type": "content", "version": "A",
+      "sectionTags": ["#Scripture","#Succession","#Joshua"],
+      "title_key": "【I-4】", "title": "主が先立ちヨシュアが導く", "symbol": "📜🙂✋", "base": "#0f2036",
+      "narr": "中心は人物でなく主の約束。\nヨシュアは器であり、使命は神の手にある。"
     },
 
-    {
-      "page": "6",
-      "type": "content",
-      "version": "T",
-      "sectionTags": ["#Trivia3", "#Trivia4", "#Prologue"],
-      "title_key": "【余話】",
-      "title": "静寂の余韻",
-      "symbol": "🔭",
-      "base": "#0f172a",
-      "narr": "静寂は空白ではない。聴くための余白である。\n\n言葉と沈黙のリズムが、理解を深めていく。"
+    { "page": "8",  "type": "content", "version": "A",
+      "sectionTags": ["#Scripture","#Courage","#People"],
+      "title_key": "【I-5】", "title": "強く、雄々しくあれ（民）", "symbol": "📜🙂✋", "base": "#0f223c",
+      "narr": "恐れるな。見放されないと約されている。\n勇気の根拠は臨在。成功確率ではない。"
     },
 
-    {
-      "page": "7",
-      "type": "effect",
-      "effect": "flame-out",
-      "effectRole": "closing",
-      "uiVersion": "T",
-      "base": "#000000",
-      "effectDuration": 1200
-    }
+    { "page": "9",  "type": "content", "version": "A",
+      "sectionTags": ["#Scripture","#PublicCharge","#Joshua"],
+      "title_key": "【I-6】", "title": "公の任命式", "symbol": "📜🙂✋", "base": "#0e233f",
+      "narr": "民の前で励まし、権威を可視化する。\n移行は透明であるほど、共同体は安定する。"
+    },
+
+    { "page": "10", "type": "content", "version": "T",
+      "sectionTags": ["#Leadership","#Tavo","#Tavi"],
+      "title_key": "【I-7】", "title": "二つの動詞、二つの型", "symbol": "📜🙂✋", "base": "#0f2444",
+      "narr": "モーセは「共に行け（tavo）」──協議の型。\n神は「連れて行け（tavi）」──決断の型。"
+    },
+
+    { "page": "11", "type": "content", "version": "A",
+      "sectionTags": ["#Scripture","#Presence","#Assurance"],
+      "title_key": "【I-8】", "title": "主ご自身が先立つ", "symbol": "📜🙂✋", "base": "#0f274a",
+      "narr": "主は前を進み、共におられ、見捨てない。\n恐れの反証は、臨在の記憶。"
+    },
+
+    { "page": "12", "type": "content", "version": "T",
+      "sectionTags": ["#Rhetoric","#Crescendo","#Chazak"],
+      "title_key": "【I-9】", "title": "勇気の三重奏", "symbol": "📜🙂✋", "base": "#0f2a50",
+      "narr": "民→指導者→神へと強められるクレッシェンド。\n権威は人心と制度、そして神的保証で固まる。"
+    },
+
+    { "page": "13", "type": "effect", "effectRole": "transition", "effect": "fade-in", "base": "#0f2338", "effectDuration": 900 },
+
+    { "page": "14", "type": "content", "version": "A",
+      "sectionTags": ["#Scripture","#Torah","#Levites"],
+      "title_key": "【II-1】", "title": "巻物が託される", "symbol": "📜🙂✋", "base": "#0f2d56",
+      "narr": "モーセは教えを書き、レビの祭司と長老に渡す。\nテキストは共同体の財産となる。"
+    },
+
+    { "page": "15", "type": "content", "version": "A",
+      "sectionTags": ["#Scripture","#Hakhel","#Festival"],
+      "title_key": "【II-2】", "title": "七年ごとのハクヘル", "symbol": "📜🙂✋", "base": "#0f2f5b",
+      "narr": "仮庵の祭りに皆を集め、聴き、学ばせよ。\n教育と畏れは、公開の儀で更新される。"
+    },
+
+    { "page": "16", "type": "content", "version": "T",
+      "sectionTags": ["#Inclusion","#People","#Education"],
+      "title_key": "【II-3】", "title": "包括の革新性", "symbol": "📜🙂✋", "base": "#103161",
+      "narr": "男・女・子ども・寄留者まで。\n古代では稀な、全員参加の公教育。"
+    },
+
+    { "page": "17", "type": "content", "version": "T",
+      "sectionTags": ["#Sinai","#Reenactment","#Awe"],
+      "title_key": "【II-4】", "title": "シナイの再演", "symbol": "📜🙂✋", "base": "#113467",
+      "narr": "ハクヘルは啓示の追体験。\n契約を“過去の記録”から“現在の約束”へ呼び戻す。"
+    },
+
+    { "page": "18", "type": "content", "version": "T",
+      "sectionTags": ["#Mishnah","#Practice","#Temple"],
+      "title_key": "【II-5】", "title": "歴史的実践の情景", "symbol": "📜🙂✋", "base": "#12376d",
+      "narr": "女性の庭に演壇、巻物は役人から王へ。\nアグリッパ王の朗読は民の涙を呼んだ。"
+    },
+
+    { "page": "19", "type": "content", "version": "T",
+      "sectionTags": ["#Modern","#Memory","#Community"],
+      "title_key": "【II-6】", "title": "現代の追想と応用", "symbol": "📜🙂✋", "base": "#133a73",
+      "narr": "神殿はなくとも精神は生きる。\n集い・学び・再コミットが共同体を再結束する。"
+    },
+
+    { "page": "20", "type": "effect", "effectRole": "transition", "effect": "slide-up", "base": "#0f2238", "effectDuration": 900 },
+
+    { "page": "21", "type": "content", "version": "A",
+      "sectionTags": ["#Scripture","#TentOfMeeting","#Call"],
+      "title_key": "【III-1】", "title": "幕屋での召喚", "symbol": "📜🙂✋", "base": "#0f345f",
+      "narr": "主はモーセとヨシュアを呼び、雲の柱が立つ。\n移行は神の臨在の下で承認される。"
+    },
+
+    { "page": "22", "type": "content", "version": "A",
+      "sectionTags": ["#Scripture","#Prophecy","#Realism"],
+      "title_key": "【III-2】", "title": "背教の予告", "symbol": "📜🙂✋", "base": "#0e3563",
+      "narr": "民は迷い、契約を破るだろう。\n神は顔を隠される──ヘステル・パニーム。"
+    },
+
+    { "page": "23", "type": "content", "version": "T",
+      "sectionTags": ["#HesterPanim","#Theology","#History"],
+      "title_key": "【III-3】", "title": "隠された臨在", "symbol": "📜🙂✋", "base": "#0e3768",
+      "narr": "不在ではなく“隠れ”。\n歴史の暗闇で、信仰は追憶と約束にしがみつく。"
+    },
+
+    { "page": "24", "type": "content", "version": "A",
+      "sectionTags": ["#Scripture","#Song","#Witness"],
+      "title_key": "【III-4】", "title": "歌を書き口に置け", "symbol": "📜🙂✋", "base": "#0e396e",
+      "narr": "歌は忘れ難い証人となり、災いの日に立ち向かう。\n口承の力で契約を刻み直す。"
+    },
+
+    { "page": "25", "type": "content", "version": "T",
+      "sectionTags": ["#DualWitness","#Scroll","#Law"],
+      "title_key": "【III-5】", "title": "二重の証人", "symbol": "📜🙂✋", "base": "#0e3c73",
+      "narr": "内なる歌と外なる巻物。\n情動と法が、互いの弱さを補完して記憶を守る。"
+    },
+
+    { "page": "26", "type": "content", "version": "A",
+      "sectionTags": ["#Scripture","#Ark","#Placement"],
+      "title_key": "【III-6】", "title": "箱の傍らへ", "symbol": "📜🙂✋", "base": "#0e3e79",
+      "narr": "巻物は契約の箱の傍らに置かれる。\n民に対する証人として、最聖所の近くで語り続ける。"
+    },
+
+    { "page": "27", "type": "content", "version": "T",
+      "sectionTags": ["#Haazinu","#Prelude","#Poetry"],
+      "title_key": "【III-7】", "title": "歌への前口上", "symbol": "📜🙂✋", "base": "#0e4180",
+      "narr": "次章ヘアズィヌへ──神義論の詩が始まる。\n岩なる神の忠実と、人の移ろいが対照される。"
+    },
+
+    { "page": "28", "type": "effect", "effectRole": "transition", "effect": "zoom-in", "base": "#0a1526", "effectDuration": 900 },
+
+    { "page": "29", "type": "content", "version": "T",
+      "sectionTags": ["#Haftarah","#ShabbatShuvah","#Return"],
+      "title_key": "【IV-1】", "title": "帰還の安息日", "symbol": "📜🙂✋", "base": "#0e427e",
+      "narr": "ヴァイエレフは大祭日の狭間で読まれることが多い。\n礼拝は悔い改めの呼びかけで応答する。"
+    },
+
+    { "page": "30", "type": "content", "version": "A",
+      "sectionTags": ["#Scripture","#Hosea","#Mercy"],
+      "title_key": "【IV-2】", "title": "ホセア：帰れイスラエルよ", "symbol": "📜🙂✋", "base": "#0e447f",
+      "narr": "主は背信を癒やし、惜しみなく愛すると言う。\n厳しい預言に、慈しみの解毒剤が注がれる。"
+    },
+
+    { "page": "31", "type": "content", "version": "T",
+      "sectionTags": ["#Joel","#Assembly","#Restoration"],
+      "title_key": "【IV-3】", "title": "ヨエル：角笛と集会", "symbol": "📜🙂✋", "base": "#0e4681",
+      "narr": "シオンで角笛を。民を聖別し、祭司は泣き叫べ。\n悔い改めの公的行為に、回復の約束が続く。"
+    },
+
+    { "page": "32", "type": "content", "version": "T",
+      "sectionTags": ["#Micah","#Pardon","#Hope"],
+      "title_key": "【IV-4】", "title": "ミカ：誰が神のようか", "symbol": "📜🙂✋", "base": "#0e4883",
+      "narr": "罪を見過ごす神、憐れみを喜ばれる神。\n咎は海の深みに投げ込まれる。"
+    },
+
+    { "page": "33", "type": "effect", "effectRole": "transition", "effect": "fade-in", "base": "#0a1220", "effectDuration": 900 },
+
+    { "page": "34", "type": "content", "version": "T",
+      "sectionTags": ["#Leadership","#Wisdom","#Discern"],
+      "title_key": "【V-1】", "title": "二様の統治を弁別する知恵", "symbol": "📜🙂✋", "base": "#0e4a85",
+      "narr": "協議して育てる時と、決断して率いる時。\n指導の成熟は、この見極めに宿る。"
+    },
+
+    { "page": "35", "type": "content", "version": "T",
+      "sectionTags": ["#Institution","#Resilience","#Design"],
+      "title_key": "【V-2】", "title": "制度化された回復力", "symbol": "📜🙂✋", "base": "#0e4c87",
+      "narr": "ハクヘル・歌・巻物──三つの仕組みが失敗後の帰還路を確保。\n危機を前提に設計された霊的インフラ。"
+    },
+
+    { "page": "36", "type": "content", "version": "T",
+      "sectionTags": ["#Memory","#Community","#Practice"],
+      "title_key": "【V-3】", "title": "記憶を運用する共同体", "symbol": "📜🙂✋", "base": "#0e4e89",
+      "narr": "朗読・集会・歌唱・保存。反復がアイデンティティを彫り込む。\n記憶は儀礼という身体性で保持される。"
+    },
+
+    { "page": "37", "type": "content", "version": "T",
+      "sectionTags": ["#Ethos","#Hope","#Future"],
+      "title_key": "【V-4】", "title": "厳しさを超える希望", "symbol": "📜🙂✋", "base": "#0e508b",
+      "narr": "顔が隠れても、道は閉ざされない。\n帰還は常に可能で、慈しみは尽きない。"
+    },
+
+    { "page": "38", "type": "effect", "effectRole": "transition", "effect": "slide-up", "base": "#09101c", "effectDuration": 900 },
+
+    { "page": "39", "type": "content", "version": "A",
+      "sectionTags": ["#Scripture","#Warning","#Future"],
+      "title_key": "【終-1】", "title": "反逆の傾向を知る", "symbol": "📜🙂✋", "base": "#0e528d",
+      "narr": "モーセは頑なさを知りつつも、証人と儀式を整えた。\n未来は偶然に委ねられない。"
+    },
+
+    { "page": "40", "type": "content", "version": "T",
+      "sectionTags": ["#Summary","#Legacy","#Design"],
+      "title_key": "【終-2】", "title": "遺産としての設計", "symbol": "📜🙂✋", "base": "#0e548f",
+      "narr": "勇気の告知・権威の移譲・記憶の制度化。\nヴァイエレフは“終わりの章”ではなく“継承の設計図”。"
+    },
+
+    { "page": "41", "type": "content", "version": "T",
+      "sectionTags": ["#Takeaway","#Today","#Practice"],
+      "title_key": "【終-3】", "title": "今日の実践へ", "symbol": "📜🙂✋", "base": "#0e5691",
+      "narr": "集まり、読み、歌い、再コミットする。\n共同体は意図的な反復で、契約を現在形に保つ。"
+    },
+
+    { "page": "42", "type": "effect", "effectRole": "closing", "effect": "flame-out", "base": "#0a0f1a", "effectDuration": 1200 }
   ]
 }
