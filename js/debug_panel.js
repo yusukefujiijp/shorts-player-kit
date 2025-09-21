@@ -111,6 +111,51 @@ Policy:
   var gotoInp  = $('#dbg-goto');
   var ackEl    = $('#qb-ack');
   var chipsEl  = $('#dbg-statechips');
+
+  /* ================== Swipe to Toggle Panel =================== */
+  (function initSwipeToToggle(){
+    var swipeTarget = $('.qb-bar'); // スワイプ操作の対象はクイックバー
+    if (!swipeTarget || !tgl) return; // 対象要素やトグルボタンがなければ何もしない
+
+    var touchStartY = 0;
+    var touchCurrentY = 0;
+    var isSwiping = false;
+    var swipeThreshold = 40; // 40px以上のスワイプで判定
+
+    // スワイプ開始
+    swipeTarget.addEventListener('touchstart', function(e){
+      // 2本指以上の操作は無視
+      if (e.touches.length > 1) return;
+      isSwiping = true;
+      touchStartY = e.touches[0].clientY;
+      touchCurrentY = e.touches[0].clientY;
+    }, {passive: true});
+
+    // スワイプ中
+    swipeTarget.addEventListener('touchmove', function(e){
+      if (!isSwiping) return;
+      touchCurrentY = e.touches[0].clientY;
+    }, {passive: true});
+
+    // スワイプ終了
+    swipeTarget.addEventListener('touchend', function(e){
+      if (!isSwiping) return;
+      isSwiping = false;
+
+      var deltaY = touchCurrentY - touchStartY;
+      var isCollapsed = (host.getAttribute('data-collapsed') === 'true');
+
+      // 上方向へのスワイプ（パネルを開く）
+      if (deltaY < -swipeThreshold && isCollapsed) {
+        tgl.click(); // 既存のトグルボタンをクリックして開く
+      }
+      // 下方向へのスワイプ（パネルを閉じる）
+      else if (deltaY > swipeThreshold && !isCollapsed) {
+        tgl.click(); // 既存のトグルボタンをクリックして閉じる
+      }
+    }, {passive: true});
+  })();
+
   /* [Hotfix] lightweight logger used by telemetry handlers
      - 呼び出し元: TTS テレメトリ（player:tts-chunk / player:tts-quiet 等）
      - 仕様: 最新行を statusEl に表示、履歴は簡易バッファに保持、console にも出力
@@ -348,22 +393,11 @@ Policy:
   }
 
   /* ====================== Event-driven Status =================== */
-  var lastTts = { speaking:false, paused:false, pending:false };
-  function renderLabBadgesFromState(){
-    if(!chipsEl) return;
-    var pulse = (BADGE_MOTION==='off') ? '' : (BADGE_MOTION==='auto' ? ' pulse' : '');
-    chipsEl.innerHTML =
-      '<span class="lab-badge lab-badge--speaking'+(lastTts.speaking?' on':'')+pulse+'">speaking</span>'+
-      '<span class="lab-badge lab-badge--paused'  +(lastTts.paused  ?' on':'')+pulse+'">paused</span>'+
-      '<span class="lab-badge lab-badge--pending' +(lastTts.pending ?' on':'')+pulse+'">pending</span>';
-  }
   window.addEventListener('player:tts-state', function(ev){
     try{
       var d=(ev && ev.detail)||{};
-      lastTts.speaking=!!d.speaking;
-      lastTts.paused=!!d.paused;
-      lastTts.pending=!!d.pending;
-      renderLabBadgesFromState();
+      // renderLabBadgesFromState から renderLabBadges への統合
+      renderLabBadges(d);
     }catch(_){}
   });
 
