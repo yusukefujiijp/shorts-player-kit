@@ -68,7 +68,6 @@ voice: {
   },
   filter: { jaOnly:false }
 }
-    },
 
     quickbar: { enabled:true, mode:'twoRows', items:{ play:true, stop:true, next:true, ack:true } },
 

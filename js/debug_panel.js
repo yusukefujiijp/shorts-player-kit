@@ -391,7 +391,7 @@ Policy:
 		while (t && t !== host && !(t.tagName === 'BUTTON' && t.hasAttribute('data-act'))) t = t.parentNode;
 		if (!t || t === host) return;
 		var act = t.getAttribute('data-act') || '';
-		var P = (window.__player || {});
+		var P = (window.__player || window.__playerCore || {});
 		switch (act) {
 			case 'prev':
 				if (P.prev) P.prev();
@@ -401,7 +401,8 @@ Policy:
 				if (P.play) P.play();
 				break;
 			case 'stop':
-				try { if (P.stop) P.stop(); } catch (_) {}
+				try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (_) {}
+				try { if (P.stopHard) P.stopHard(); else if (P.stop) P.stop(); } catch (_) {}
 				break;
 			case 'next':
 				if (P.next) P.next();
@@ -441,7 +442,7 @@ Policy:
 	if (gotoInp) {
 		gotoInp.addEventListener('keydown', function(ev) {
 			if (ev.key === 'Enter') {
-				var P = (window.__player || {});
+				var P = (window.__player || window.__playerCore || {});
 				var n = (Number(gotoInp.value) | 0);
 				if (P.goto && n >= 1) P.goto(n - 1);
 			}
