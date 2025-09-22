@@ -1,6 +1,6 @@
 /*!
 Project:  shorts-player-kit
-File:     js/debug_panel.js
+File:     js/debug_panel.js (Step-1: inline-style-free, CSS-responsibility only)
 Role:     Debug Panel UI（QuickBar=2段固定 / Stop ACK 可視化 / 展開パネルに状態チップ）
 Depends:  window.__player / __ttsFlags / __ttsVoiceMap / __dbgConfig (optional)
 Policy:
@@ -168,47 +168,73 @@ Policy:
   function setFlag(name, val){
     FLAGS[name] = !!val;
     try{ localStorage.setItem(FLAGS_KEY, JSON.stringify(FLAGS)); }catch(_){}
-    window.dispatchEvent(new CustomEvent('debug:flags-changed', {detail:Object.assign({}, FLAGS)}));
+    try{ window.dispatchEvent(new CustomEvent('debug:flags-changed', {detail:Object.assign({}, FLAGS)})); }catch(_){}
   }
 
-  function renderFlags(){
-    if(!SECTIONS.ttsFlags) return;
-    var box = $('#dbg-flags'); if(!box) return;
-    box.innerHTML='';
-    box.appendChild(h('h3', null, 'TTS Flags'));
+/* ===== REPLACE: renderFlags (new horizontal chip buttons) ===== */
+function renderFlags(){
+  if(!SECTIONS.ttsFlags) return;
+  var box = $('#dbg-flags'); if(!box) return;
 
-    // 横並びのチップ群
-    var row = h('div', 'flag-row', '');
-    box.appendChild(row);
+  box.innerHTML = '';
+  box.appendChild(h('h3', null, 'TTS Flags'));
 
-    ['readTag','readTitleKey','readTitle','readNarr'].forEach(function(k){
-      var btn = h('button', 'flag', '');
-      btn.setAttribute('type','button');
-      btn.setAttribute('role','switch');
-      btn.setAttribute('aria-label', k);
-      btn.dataset.flag = k;
+  // 横並びチップ用の行（CSS: #dbg-flags .flag-row / .flag に依存）
+  var row = h('div', 'flag-row');
+  box.appendChild(row);
 
-      function sync(){
-        var on = !!FLAGS[k];
-        btn.classList.toggle('on', on);
-        btn.setAttribute('aria-checked', on ? 'true':'false');
-        // 表示ラベル（短く）：タグ／題名キー／題名／本文
-        var label = (k==='readTag'?'タグ': k==='readTitleKey'?'題名キー': k==='readTitle'?'題名':'本文');
-        btn.textContent = label;
-      }
-      btn.addEventListener('click', function(){ setFlag(k, !FLAGS[k]); sync(); });
-      btn.addEventListener('keydown', function(ev){ if(ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); setFlag(k, !FLAGS[k]); sync(); } });
+  var ITEMS = [
+    ['readTag',      'タグ'],
+    ['readTitleKey', '題名キー'],
+    ['readTitle',    '題名'],
+    ['readNarr',     '本文']
+  ];
+
+  // 既存保存の取り込み（UI生成前に FLAGS を確定）
+  try{
+    var saved = localStorage.getItem(FLAGS_KEY);
+    if(saved){
+      var o = JSON.parse(saved);
+      if(o && typeof o === 'object') Object.assign(FLAGS, o);
+    }
+  }catch(_){}
+
+  ITEMS.forEach(function(pair){
+    var k = pair[0], label = pair[1];
+
+    var btn = h('button', 'flag', label);
+    btn.type = 'button';
+    btn.dataset.flag = k;
+    btn.setAttribute('role', 'switch');
+
+    function sync(){
+      var on = !!FLAGS[k];
+      btn.classList.toggle('on', on);
+      btn.setAttribute('aria-checked', on ? 'true' : 'false');
+      // 表示ラベルは固定（日本語ラベル）。必要ならここで切替も可
+    }
+
+    btn.addEventListener('click', function(){
+      setFlag(k, !FLAGS[k]);
       sync();
-      row.appendChild(btn);
     });
 
-    // 旧保存の取り込み（初回のみ）
-    try{
-      var saved = localStorage.getItem(FLAGS_KEY);
-      if(saved){ var o = JSON.parse(saved); if(o && typeof o==='object'){ Object.assign(FLAGS, o); } }
-    }catch(_){}
-  }
-  renderFlags();
+    btn.addEventListener('keydown', function(ev){
+      if(ev.key === 'Enter' || ev.key === ' '){
+        ev.preventDefault();
+        setFlag(k, !FLAGS[k]);
+        sync();
+      }
+    });
+
+    sync();
+    row.appendChild(btn);
+  });
+}
+/* ===== END REPLACE ===== */
+
+/* 再描画呼び出し（既に呼んでいる場合は二重呼び出し不要） */
+renderFlags();
 
   /* ============================ Voices ========================== */
   var VOICE_FILTER = { jaOnly: (VOICE_IN.filter && typeof VOICE_IN.filter.jaOnly==='boolean') ? !!VOICE_IN.filter.jaOnly : true };
