@@ -1,25 +1,20 @@
 /*!
 Project: shorts-player-kit
 File:    js/debug_config.js
-Role:    Debug Panel Config (機能露出とUIバッジの方針を一元管理)
+Role:    Debug Panel Config
 Notes:
-  - QuickBar は 2 段固定。Row1: Debug / Play / Stop / Next / ACK, Row2: status。
-  - 展開パネルは speaking/paused/pending（実験用パルス）を維持。
-  - badges.motion: 'auto' | 'static' | 'off'
-  - レート規範は「役割別・絶対 (perRoleAbs)」。baseRate は UI 既定非表示。
-  - 本設定は「デフォルト ← ユーザー上書き」を安全にマージしてから凍結。
+  - QuickBarは2段固定。Row1: Debug/Play/Stop/Next/ACK、Row2: status。
+  - デフォルト音声は固定せず “Auto” に戻す（役割別 hints は豊富に）。
+  - Voicesは JA のみを基本表示。ただし実機で 0 件でも tts-voice-utils 側が賢くフォールバック。
 */
 (function(){
   'use strict';
 
   // ---- merge: defaults ← overrides（配列は置換、プレーンオブジェクトは再帰）----
-  function isPlainObject(v){
-    return !!v && Object.prototype.toString.call(v) === '[object Object]';
-  }
+  function isPlainObject(v){ return !!v && Object.prototype.toString.call(v) === '[object Object]'; }
   function deepMerge(base, over){
     if (!isPlainObject(base)) return over;
-    var out = {};
-    Object.keys(base).forEach(function(k){ out[k] = base[k]; });
+    var out = {}; Object.keys(base).forEach(function(k){ out[k] = base[k]; });
     if (isPlainObject(over)){
       Object.keys(over).forEach(function(k){
         var bv = out[k], ov = over[k];
@@ -30,92 +25,61 @@ Notes:
     }
     return out;
   }
-
   function deepFreeze(o){
     if (!o || typeof o !== 'object') return o;
     Object.getOwnPropertyNames(o).forEach(function(prop){
-      var v = o[prop];
-      if (v && typeof v === 'object') deepFreeze(v);
+      var v = o[prop]; if (v && typeof v === 'object') deepFreeze(v);
     });
     return Object.freeze(o);
   }
 
-  // ---- Defaults（「役割別・絶対」レート / iOS-first / Debug-UI 二段QuickBar）----
+  // ---- Defaults（Auto運用 + JA優先 + デバッグUIはそのまま）----
   var defaults = {
-    /* 初期表示は折りたたみ */
     collapsedDefault: true,
 
-    /* パネルのセクション可視性 */
     sections: {
-      status:   true,
-      note:     false,
-      controls: true,
-      goto:     true,
-      ttsFlags: true,
-      voices:   true,
-      baseRate: false
+      status:true, note:false, controls:true, goto:true, ttsFlags:true, voices:true, baseRate:false
     },
 
-    /* 表示する操作ボタン（展開パネル側） */
     buttons: {
-      prev:       true,
-      next:       true,   // QuickBarにも next を昇格するが、展開側にも残す
-      play:       false,  // QuickBar 側に集約
-      stop:       false,  // QuickBar 側に集約
-      restart:    true,
-      goto:       true,
-      hardreload: true,
-      hardstop:   false
+      prev:true, next:true, play:false, stop:false, restart:true, goto:true, hardreload:true, hardstop:false
     },
 
-    /* UI上の編集ロック（必要に応じて制限） */
-    locks: {
-      allowTTSFlagEdit: true,
-      allowVoiceSelect: true
+    locks: { allowTTSFlagEdit:true, allowVoiceSelect:true },
+
+    // 速度規範（役割別・絶対）
+    rateMode:'perRoleAbs',
+    rolesRate:{ min:0.5, max:2.0, step:0.1, defaultAbs:1.4 },
+    // 互換
+    rate:{ min:0.5, max:2.0, step:0.05 },
+
+    ttsFlagsDefault:{ readTag:true, readTitleKey:true, readTitle:true, readNarr:true },
+
+    // ★ デフォルト音声は “指定しない(=Auto)” に変更
+    //   → __playerCore が __ttsVoiceMap を未設定なら触らず、tts 側の pick() とUI選択に委ねる
+// debug_config.js の voice.hints を拡張（任意）
+voice: {
+  defaults: { tag:'ja-JP|Kyoko', titleKey:'ja-JP|Kyoko', title:'ja-JP|Kyoko', narr:'ja-JP|Kyoko' },
+  hints: {
+    tag:   ['ja-JP|Kyoko','Kyoko','Otoya','O-ren','Eddy','Flo','Grandma','Grandpa','Reed','Rocko','Sandy','Shelley'],
+    titleKey: ['ja-JP|Kyoko','Kyoko','Otoya','O-ren','Eddy','Flo','Grandma','Grandpa','Reed','Rocko','Sandy','Shelley'],
+    title:    ['ja-JP|Kyoko','Kyoko','Otoya','O-ren','Eddy','Flo','Grandma','Grandpa','Reed','Rocko','Sandy','Shelley'],
+    narr:     ['ja-JP|Kyoko','Kyoko','Otoya','O-ren','Eddy','Flo','Grandma','Grandpa','Reed','Rocko','Sandy','Shelley']
+  },
+  filter: { jaOnly:false }
+}
     },
 
-    /* 速度規範（役割別の絶対値） */
-    rateMode: 'perRoleAbs',
-    rolesRate: { min:0.5, max:2.0, step:0.1, defaultAbs:1.4 },
+    quickbar: { enabled:true, mode:'twoRows', items:{ play:true, stop:true, next:true, ack:true } },
 
-    /* 互換（perRoleAbsでは未使用） */
-    rate: { min:0.5, max:2.0, step:0.05 },
-
-    /* TTSフラグ既定（初期チェック状態） */
-    ttsFlagsDefault: { readTag:true, readTitleKey:true, readTitle:true, readNarr:true },
-
-    /* 既定ボイスと候補ヒント、フィルタ（JAのみに絞る） */
-    voice: {
-      defaults: {
-        tag:      'ja-JP|Kyoko',
-        titleKey: 'ja-JP|Kyoko',
-        title:    'ja-JP|Kyoko',
-        narr:     'ja-JP|Kyoko'
-      },
-      hints: {
-        tag:      ['ja-JP|Kyoko', 'Kyoko'],
-        titleKey: ['ja-JP|Kyoko', 'Kyoko'],
-        title:    ['ja-JP|Kyoko', 'Kyoko'],
-        narr:     ['ja-JP|Kyoko', 'Kyoko']
-      },
-      filter: { jaOnly: true }
-    },
-
-    /* QuickBar 方針 */
-    quickbar: {
-      enabled: true,
-      mode: 'twoRows',
-      items: { play:true, stop:true, next:true, ack:true }
-    },
-
-    /* ステータス・バッジの方針（展開パネルのラボ用） */
-    badges: {
-      motion: 'auto' // 'auto' | 'static' | 'off'
-    }
+    badges: { motion:'auto' } // 'auto' | 'static' | 'off'
   };
 
   // 既存の window.__dbgConfig があれば優先してマージ（上書きは**ユーザー側**のみ）
   var incoming = (typeof window.__dbgConfig === 'object' && window.__dbgConfig) ? window.__dbgConfig : {};
   var merged   = deepMerge(defaults, incoming);
   window.__dbgConfig = deepFreeze(merged);
+
+  // 参考：以前 Kyoko を localStorage に保存していた場合、UI操作で「Auto」に戻してください。
+  // 保存キー（参考）：'dbg.voice.tag' / 'dbg.voice.titleKey' / 'dbg.voice.title' / 'dbg.voice.narr'
 })();
